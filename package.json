@@ -1,0 +1,32 @@
+{
+  "name": "plusops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered internal developer portal and incident management platform.",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "contracts:build": "pnpm --filter @plusops/contracts build",
+    "dev": "pnpm contracts:build && pnpm --parallel --filter @plusops/web --filter @plusops/api dev",
+    "dev:web": "pnpm contracts:build && pnpm --filter @plusops/web dev",
+    "dev:api": "pnpm contracts:build && pnpm --filter @plusops/api dev",
+    "build": "pnpm contracts:build && pnpm --filter @plusops/api build && pnpm --filter @plusops/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm contracts:build && pnpm --filter @plusops/api typecheck && pnpm --filter @plusops/web typecheck",
+    "test": "pnpm -r test",
+    "format": "pnpm -r format",
+    "infra:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "infra:logs": "docker compose -f infra/docker/docker-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.4.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

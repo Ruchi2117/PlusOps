@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ENGINEERING_MANAGER
+  DEVELOPER
+  QA_ENGINEER
+  VIEWER
+}
+
+enum IncidentSeverity {
+  SEV1
+  SEV2
+  SEV3
+  SEV4
+}
+
+enum IncidentPriority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum IncidentStatus {
+  INVESTIGATING
+  IDENTIFIED
+  MONITORING
+  RESOLVED
+}
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  name            String
+  passwordHash    String?
+  role            Role              @default(DEVELOPER)
+  isActive        Boolean           @default(true)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+  teamMemberships TeamMember[]
+  assignedIncidents Incident[]      @relation("IncidentAssignee")
+  comments        IncidentComment[]
+  auditLogs       AuditLog[]
+
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model Team {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  slug      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+  members   TeamMember[]
+  services  Service[]
+
+  @@index([deletedAt])
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model Service {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  ownerTeamId String
+  tier        Int        @default(2)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+  ownerTeam   Team       @relation(fields: [ownerTeamId], references: [id])
+  incidents   Incident[]
+
+  @@index([ownerTeamId])
+  @@index([deletedAt])
+}
+
+model Incident {
+  id             String           @id @default(uuid())
+  title          String
+  description    String?
+  severity       IncidentSeverity
+  priority       IncidentPriority
+  status         IncidentStatus   @default(INVESTIGATING)
+  serviceId      String
+  assigneeId     String?
+  customerImpact String?
+  startedAt      DateTime         @default(now())
+  resolvedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+  service        Service          @relation(fields: [serviceId], references: [id])
+  assignee       User?            @relation("IncidentAssignee", fields: [assigneeId], references: [id])
+  comments       IncidentComment[]
+
+  @@index([serviceId])
+  @@index([assigneeId])
+  @@index([severity, status])
+  @@index([deletedAt])
+}
+
+model IncidentComment {
+  id         String   @id @default(uuid())
+  incidentId String
+  authorId   String
+  body       String
+  createdAt  DateTime @default(now())
+  incident   Incident @relation(fields: [incidentId], references: [id])
+  author     User     @relation(fields: [authorId], references: [id])
+
+  @@index([incidentId])
+  @@index([authorId])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
