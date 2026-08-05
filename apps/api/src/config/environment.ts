@@ -1,11 +1,34 @@
 import { z } from "zod";
 
+const booleanEnvironmentSchema = z.preprocess((value) => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === "true") {
+    return true;
+  }
+
+  if (value === "false") {
+    return false;
+  }
+
+  return value;
+}, z.boolean());
+
 const environmentSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(4000),
   APP_URL: z.string().default("http://localhost:5173"),
   DATABASE_URL: z.string().url().optional(),
+  AUTH_EMAIL_VERIFICATION_TTL: z.string().default("24h"),
+  AUTH_PASSWORD_RESET_TTL: z.string().default("1h"),
+  AUTH_REFRESH_COOKIE_NAME: z.string().default("plusops_refresh_token"),
+  AUTH_COOKIE_DOMAIN: z.string().optional(),
+  AUTH_REQUIRE_EMAIL_VERIFICATION: booleanEnvironmentSchema.default(false),
   JWT_ACCESS_SECRET: z.string().min(24).optional(),
+  JWT_ACCESS_TTL: z.string().default("15m"),
   JWT_REFRESH_SECRET: z.string().min(24).optional(),
+  JWT_REFRESH_TTL: z.string().default("7d"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   REDIS_URL: z.string().url().optional()
 });
@@ -21,4 +44,3 @@ export function validateEnvironment(config: Record<string, unknown>) {
 
   return parsed.data;
 }
-

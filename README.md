@@ -7,7 +7,7 @@ AI-powered internal developer platform and incident management system for engine
 
 PlusOps is a production-minded SaaS project built incrementally to demonstrate modern full-stack engineering practices. The long-term product vision is to help engineering teams manage incidents, understand service health, inspect APIs, collaborate during operational events, and use AI assistance to improve developer productivity.
 
-This repository is under active development. The current release is **Milestone 1: Architecture Foundation**. It intentionally focuses on repository structure, architecture boundaries, documentation, local infrastructure, and a small runnable product shell rather than complete product workflows.
+This repository is under active development. The first public release is **Milestone 1: Architecture Foundation**. Current work is focused on **Milestone 2: Authentication and Authorization**. The project intentionally grows in small, reviewable milestones rather than shipping unfinished product workflows as complete features.
 
 ## Why PlusOps Exists
 
@@ -23,7 +23,9 @@ Suggested first screenshot:
 
 ## Current Status
 
-Milestone 1 is complete enough to establish the foundation:
+Milestone 1 is complete and Milestone 2 is in progress.
+
+Milestone 1 established:
 
 - Monorepo workspace
 - React/Vite web application shell
@@ -34,9 +36,25 @@ Milestone 1 is complete enough to establish the foundation:
 - CI workflow for linting, typechecking, testing, and building
 - Architecture documentation and ADRs
 
+Milestone 2 currently includes:
+
+- Auth and RBAC Prisma model foundation
+- Shared authentication contracts
+- NestJS auth module boundary
+- Auth domain types and application ports
+- Prisma auth infrastructure adapters
+- Argon2id password hasher
+- JWT and opaque token service
+- Backend signup endpoint
+- Backend login endpoint with session establishment
+- Backend refresh endpoint with token rotation
+- Backend logout endpoint with session revocation
+- Session/token and RBAC ADRs
+
 Not implemented yet:
 
-- Authentication and RBAC
+- Frontend auth screens and email delivery flows
+- Password reset, email verification, OAuth, and MFA flows
 - Persistent incident workflows
 - AI provider integrations
 - Monitoring ingestion
@@ -201,11 +219,12 @@ pnpm test
 pnpm build
 ```
 
-Milestone 1 currently includes smoke-ready test commands. Real unit and integration tests are planned as workflows become persistent in later milestones.
+Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Broader integration and end-to-end coverage will grow as the frontend and protected workflows arrive.
 
 ## Documentation
 
 - [Milestone 1: Architecture Foundation](./docs/milestones/01-architecture.md)
+- [Milestone 2: Authentication and Authorization](./docs/milestones/02-authentication-authorization.md)
 - [Architecture Overview](./docs/architecture/overview.md)
 - [ER Diagram](./docs/architecture/er-diagram.md)
 - [Security Baseline](./docs/architecture/security-baseline.md)
@@ -213,11 +232,13 @@ Milestone 1 currently includes smoke-ready test commands. Real unit and integrat
 - [ADR 0002: NestJS API](./docs/architecture/adr/0002-use-nestjs-for-api.md)
 - [ADR 0003: Prisma, PostgreSQL, and Redis](./docs/architecture/adr/0003-use-prisma-postgres-redis.md)
 - [ADR 0004: AI Provider Abstractions](./docs/architecture/adr/0004-use-provider-abstractions-for-ai.md)
+- [ADR 0005: Stateful Refresh Token Sessions](./docs/architecture/adr/0005-use-stateful-refresh-token-sessions.md)
+- [ADR 0006: Data-Backed RBAC](./docs/architecture/adr/0006-use-data-backed-rbac.md)
 
 ## Roadmap
 
 1. Milestone 1: Architecture foundation
-2. Milestone 2: Authentication and RBAC
+2. Milestone 2: Authentication and RBAC in progress
 3. Milestone 3: Database migrations and seed data
 4. Milestone 4: Incident management workflows
 5. Milestone 5: API management
