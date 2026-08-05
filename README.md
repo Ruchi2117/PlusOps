@@ -7,7 +7,31 @@ AI-powered internal developer platform and incident management system for engine
 
 PlusOps is a production-minded SaaS project built incrementally to demonstrate modern full-stack engineering practices. The long-term product vision is to help engineering teams manage incidents, understand service health, inspect APIs, collaborate during operational events, and use AI assistance to improve developer productivity.
 
-This repository is under active development. The first public release is **Milestone 1: Architecture Foundation**. Current work is focused on **Milestone 2: Authentication and Authorization**. The project intentionally grows in small, reviewable milestones rather than shipping unfinished product workflows as complete features.
+This repository is under active development. The current stable release is **v0.2.0: Authentication Backend**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
+
+## Project Status
+
+### Completed Milestones
+
+- ✅ `v0.1.0-milestone-1` — Architecture Foundation
+- ✅ `v0.2.0` — Authentication Backend
+
+### Current Focus
+
+- 🚧 Milestone 3 — Incident Management and Database Integration
+
+## Latest Release
+
+**Current Stable Release:** [`v0.2.0 — Authentication Backend`](https://github.com/Ruchi2117/PlusOps/releases/tag/v0.2.0)
+
+Milestone 2 introduces a production-oriented authentication backend with Clean Architecture boundaries, JWT access tokens, opaque hashed refresh tokens with rotation, RBAC foundations, secure session management, Argon2id password hashing, audit logging, shared contracts, tests, and documentation.
+
+## Releases
+
+| Version | Status | Highlights |
+| --- | --- | --- |
+| `v0.1.0-milestone-1` | ✅ Released | Architecture foundation, monorepo, Docker, CI, documentation |
+| `v0.2.0` | ✅ Released | Authentication backend, RBAC foundation, JWT, refresh token rotation |
 
 ## Why PlusOps Exists
 
@@ -21,45 +45,48 @@ Suggested first screenshot:
 
 - Operations dashboard with service health, API latency, and recent incidents
 
-## Current Status
+## Current Features
 
-Milestone 1 is complete and Milestone 2 is in progress.
+### ✅ Implemented
 
-Milestone 1 established:
-
-- Monorepo workspace
-- React/Vite web application shell
-- NestJS API skeleton
+- Authentication backend
+- JWT access tokens
+- Opaque hashed refresh tokens
+- Refresh token rotation
+- Logout and session revocation
+- Role-Based Access Control foundation
+- Audit logging
+- Clean Architecture module boundaries
 - Shared TypeScript/Zod contracts
-- Prisma schema draft
-- Docker Compose local infrastructure
-- CI workflow for linting, typechecking, testing, and building
-- Architecture documentation and ADRs
+- Docker development environment
+- GitHub Actions CI
 
-Milestone 2 currently includes:
+### 🚧 In Progress
 
-- Auth and RBAC Prisma model foundation
-- Shared authentication contracts
-- NestJS auth module boundary
-- Auth domain types and application ports
-- Prisma auth infrastructure adapters
-- Argon2id password hasher
-- JWT and opaque token service
-- Backend signup endpoint
-- Backend login endpoint with session establishment
-- Backend refresh endpoint with token rotation
-- Backend logout endpoint with session revocation
-- Session/token and RBAC ADRs
+- Incident management and database integration
 
-Not implemented yet:
+### 📌 Planned
 
-- Frontend auth screens and email delivery flows
-- Password reset, email verification, OAuth, and MFA flows
-- Persistent incident workflows
-- AI provider integrations
+- Frontend authentication screens
+- Email verification and password reset flows
+- OAuth and MFA
+- API operations workflows
 - Monitoring ingestion
-- Slack/email/WebSocket notifications
-- Production deployment
+- Notifications and collaboration
+- AI copilot provider integrations
+- Production deployment hardening
+
+## Authentication Highlights
+
+- Argon2id password hashing
+- Short-lived JWT access tokens
+- Opaque refresh tokens stored only as hashes
+- Refresh token rotation with old-token rejection
+- Server-side session management
+- Logout with session and refresh-token revocation
+- Role-Based Access Control foundation
+- Auth audit logging
+- Secure HttpOnly refresh-token cookies
 
 ## Tech Stack
 
@@ -101,6 +128,25 @@ Not implemented yet:
 ## Architecture Overview
 
 PlusOps uses a TypeScript monorepo so the frontend, backend, and shared API contracts can evolve together.
+
+```text
+React Web App
+   |
+   v
+NestJS API
+   |
+   v
+Use Cases
+   |
+   v
+Repository Ports
+   |
+   v
+Prisma
+   |
+   v
+PostgreSQL
+```
 
 The API follows Clean Architecture boundaries inside feature modules:
 
@@ -237,16 +283,41 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 
 ## Roadmap
 
-1. Milestone 1: Architecture foundation
-2. Milestone 2: Authentication and RBAC in progress
-3. Milestone 3: Database migrations and seed data
-4. Milestone 4: Incident management workflows
-5. Milestone 5: API management
-6. Milestone 6: AI copilot provider abstraction
-7. Milestone 7: Notifications and collaboration
-8. Milestone 8: Observability and deployment hardening
-9. Milestone 9: Testing and performance optimization
-10. Milestone 10: Production release readiness
+```text
+✅ Architecture Foundation
+   |
+   v
+✅ Authentication Backend
+   |
+   v
+🚧 Incident Management and Database Integration
+   |
+   v
+API Operations
+   |
+   v
+Monitoring
+   |
+   v
+Notifications and Collaboration
+   |
+   v
+AI Copilot
+   |
+   v
+Deployment Hardening
+```
+
+1. Milestone 1: Architecture Foundation — released
+2. Milestone 2: Authentication Backend — released
+3. Milestone 3: Incident Management and Database Integration — current focus
+4. Milestone 4: API Operations
+5. Milestone 5: Monitoring and Observability
+6. Milestone 6: Notifications and Collaboration
+7. Milestone 7: AI Copilot Provider Abstraction
+8. Milestone 8: Deployment Hardening
+9. Milestone 9: Testing and Performance Optimization
+10. Milestone 10: Production Release Readiness
 
 ## Contributing
 
