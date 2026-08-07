@@ -5,7 +5,11 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 import { AUTH_CLOCK } from "../../auth.tokens";
 import type { ClockPort, GeneratedOpaqueToken, TokenServicePort } from "../../application/ports";
-import type { AccessTokenPayload, SignedAccessToken } from "../../application/ports";
+import type {
+  AccessTokenPayload,
+  SignedAccessToken,
+  VerifiedAccessToken
+} from "../../application/ports";
 import { addDuration, parseDurationToSeconds } from "./duration";
 
 @Injectable()
@@ -30,6 +34,12 @@ export class JwtTokenService implements TokenServicePort {
       token,
       expiresAt: addDuration(this.clock.now(), accessTokenTtl)
     };
+  }
+
+  async verifyAccessToken(token: string): Promise<VerifiedAccessToken> {
+    return this.jwtService.verifyAsync<VerifiedAccessToken>(token, {
+      secret: this.getRequiredConfig("JWT_ACCESS_SECRET")
+    });
   }
 
   async createRefreshToken(): Promise<GeneratedOpaqueToken> {

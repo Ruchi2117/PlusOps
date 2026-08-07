@@ -22,10 +22,13 @@ enum IncidentPriority {
 }
 
 enum IncidentStatus {
+  OPEN
   INVESTIGATING
   IDENTIFIED
+  MITIGATED
   MONITORING
   RESOLVED
+  CLOSED
 }
 
 model User {
@@ -45,8 +48,12 @@ model User {
   passwordResetTokens     PasswordResetToken[]
   oauthAccounts           OAuthAccount[]
   teamMemberships         TeamMember[]
+  reportedIncidents       Incident[]               @relation("IncidentReporter")
   assignedIncidents       Incident[]               @relation("IncidentAssignee")
   comments                IncidentComment[]
+  incidentTimelineEvents  IncidentTimelineEvent[]
+  incidentMentions        IncidentMention[]        @relation("IncidentMentionedUser")
+  uploadedAttachments     IncidentAttachment[]     @relation("IncidentAttachmentUploader")
   auditLogs               AuditLog[]
 
   @@index([emailVerifiedAt])
@@ -225,41 +232,106 @@ model Service {
 }
 
 model Incident {
-  id             String            @id @default(uuid())
+  id             String                  @id @default(uuid())
   title          String
   description    String?
   severity       IncidentSeverity
   priority       IncidentPriority
-  status         IncidentStatus    @default(INVESTIGATING)
+  status         IncidentStatus          @default(OPEN)
   serviceId      String
+  reporterId     String
   assigneeId     String?
   customerImpact String?
-  startedAt      DateTime          @default(now())
+  startedAt      DateTime                @default(now())
   resolvedAt     DateTime?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  closedAt       DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
   deletedAt      DateTime?
-  service        Service           @relation(fields: [serviceId], references: [id])
-  assignee       User?             @relation("IncidentAssignee", fields: [assigneeId], references: [id])
+  service        Service                 @relation(fields: [serviceId], references: [id])
+  reporter       User                    @relation("IncidentReporter", fields: [reporterId], references: [id])
+  assignee       User?                   @relation("IncidentAssignee", fields: [assigneeId], references: [id])
   comments       IncidentComment[]
+  timelineEvents IncidentTimelineEvent[]
+  attachments    IncidentAttachment[]
+  mentions       IncidentMention[]
 
-  @@index([serviceId])
+  @@index([serviceId, createdAt])
+  @@index([reporterId])
   @@index([assigneeId])
   @@index([severity, status])
+  @@index([status, createdAt])
   @@index([deletedAt])
+  @@index([updatedAt])
 }
 
 model IncidentComment {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   incidentId String
   authorId   String
   body       String
-  createdAt  DateTime @default(now())
-  incident   Incident @relation(fields: [incidentId], references: [id])
-  author     User     @relation(fields: [authorId], references: [id])
+  editedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+  incident   Incident  @relation(fields: [incidentId], references: [id])
+  author     User      @relation(fields: [authorId], references: [id])
+  mentions   IncidentMention[]
 
-  @@index([incidentId])
+  @@index([incidentId, createdAt])
   @@index([authorId])
+  @@index([deletedAt])
+}
+
+model IncidentMention {
+  id              String          @id @default(uuid())
+  incidentId      String
+  commentId       String
+  mentionedUserId String
+  handle          String
+  createdAt       DateTime        @default(now())
+  incident        Incident        @relation(fields: [incidentId], references: [id])
+  comment         IncidentComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUser   User            @relation("IncidentMentionedUser", fields: [mentionedUserId], references: [id])
+
+  @@unique([commentId, mentionedUserId])
+  @@index([incidentId, createdAt])
+  @@index([mentionedUserId])
+  @@index([handle])
+}
+
+model IncidentAttachment {
+  id               String    @id @default(uuid())
+  incidentId       String
+  uploadedByUserId String
+  filename         String
+  contentType      String
+  size             Int
+  storageKey       String
+  uploadedAt       DateTime  @default(now())
+  deletedAt        DateTime?
+  incident         Incident  @relation(fields: [incidentId], references: [id])
+  uploadedBy       User      @relation("IncidentAttachmentUploader", fields: [uploadedByUserId], references: [id])
+
+  @@unique([storageKey])
+  @@index([incidentId, uploadedAt])
+  @@index([uploadedByUserId])
+  @@index([deletedAt])
+}
+
+model IncidentTimelineEvent {
+  id          String   @id @default(uuid())
+  incidentId  String
+  actorUserId String?
+  type        String
+  message     String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  incident    Incident @relation(fields: [incidentId], references: [id])
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([incidentId, createdAt])
+  @@index([actorUserId])
+  @@index([type])
 }
 
 model AuditLog {

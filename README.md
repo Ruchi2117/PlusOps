@@ -7,31 +7,46 @@ AI-powered internal developer platform and incident management system for engine
 
 PlusOps is a production-minded SaaS project built incrementally to demonstrate modern full-stack engineering practices. The long-term product vision is to help engineering teams manage incidents, understand service health, inspect APIs, collaborate during operational events, and use AI assistance to improve developer productivity.
 
-This repository is under active development. The current stable release is **v0.2.0: Authentication Backend**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
+This repository is under active development. The current stable release is **v0.5.0: Incident Collaboration Layer**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
 
 ## Project Status
 
 ### Completed Milestones
 
-- ✅ `v0.1.0-milestone-1` — Architecture Foundation
-- ✅ `v0.2.0` — Authentication Backend
+- [x] `v0.1.0-milestone-1` - Architecture Foundation
+- [x] `v0.2.0` - Authentication Backend
+- [x] `v0.3.0` - Incident Lifecycle Operations
+- [x] `v0.4.0` - Incident Workflow Engine
+- [x] `v0.5.0` - Incident Collaboration Layer
 
 ### Current Focus
 
-- 🚧 Milestone 3 — Incident Management and Database Integration
+- Milestone 4 - API Operations planning
+
+### Milestone 3 Progress
+
+- [x] Phase 0 - Domain understanding
+- [x] Phase 1 - Domain modeling and database design
+- [x] Phase 2 - Incident domain architecture
+- [x] Phase 3 - Incident lifecycle operations backend
+- [x] Phase 4 - Incident workflow engine
+- [x] Phase 5 - Collaboration layer backend
 
 ## Latest Release
 
-**Current Stable Release:** [`v0.2.0 — Authentication Backend`](https://github.com/Ruchi2117/PlusOps/releases/tag/v0.2.0)
+**Current Stable Release:** `v0.5.0 - Incident Collaboration Layer`
 
-Milestone 2 introduces a production-oriented authentication backend with Clean Architecture boundaries, JWT access tokens, opaque hashed refresh tokens with rotation, RBAC foundations, secure session management, Argon2id password hashing, audit logging, shared contracts, tests, and documentation.
+The current backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, and collaboration APIs for comments, mentions, attachment metadata, and read-only activity timelines.
 
 ## Releases
 
 | Version | Status | Highlights |
 | --- | --- | --- |
-| `v0.1.0-milestone-1` | ✅ Released | Architecture foundation, monorepo, Docker, CI, documentation |
-| `v0.2.0` | ✅ Released | Authentication backend, RBAC foundation, JWT, refresh token rotation |
+| `v0.1.0-milestone-1` | Released | Architecture foundation, monorepo, Docker, CI, documentation |
+| `v0.2.0` | Released | Authentication backend, RBAC foundation, JWT, refresh token rotation |
+| `v0.3.0` | Released | Incident lifecycle operations, Prisma repositories, REST API, audit and timeline evidence |
+| `v0.4.0` | Released | Incident workflow engine, assignment, severity changes, status transitions, resolve, reopen, close |
+| `v0.5.0` | Released | Collaboration layer, comments, mentions, attachment metadata, read-only activity timeline |
 
 ## Why PlusOps Exists
 
@@ -47,7 +62,7 @@ Suggested first screenshot:
 
 ## Current Features
 
-### ✅ Implemented
+### Implemented
 
 - Authentication backend
 - JWT access tokens
@@ -56,20 +71,27 @@ Suggested first screenshot:
 - Logout and session revocation
 - Role-Based Access Control foundation
 - Audit logging
+- Incident domain model and state machine
+- Incident lifecycle backend: create, list, read detail, update details, soft delete
+- Incident workflow engine: assignment, status transitions, severity changes, resolve, reopen, close
+- Incident collaboration backend: comments, mentions, attachment metadata, read-only activity timeline
+- Incident timeline event persistence for lifecycle and workflow changes
+- Incident DTO validation, pagination, filtering, sorting, and Swagger metadata
 - Clean Architecture module boundaries
 - Shared TypeScript/Zod contracts
 - Docker development environment
 - GitHub Actions CI
 
-### 🚧 In Progress
+### In Progress
 
-- Incident management and database integration
+- Milestone 4 planning pending approval
 
-### 📌 Planned
+### Planned
 
 - Frontend authentication screens
 - Email verification and password reset flows
 - OAuth and MFA
+- Notifications and realtime collaboration
 - API operations workflows
 - Monitoring ingestion
 - Notifications and collaboration
@@ -265,12 +287,13 @@ pnpm test
 pnpm build
 ```
 
-Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Broader integration and end-to-end coverage will grow as the frontend and protected workflows arrive.
+Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Broader integration and end-to-end coverage will grow as the frontend arrives.
 
 ## Documentation
 
 - [Milestone 1: Architecture Foundation](./docs/milestones/01-architecture.md)
 - [Milestone 2: Authentication and Authorization](./docs/milestones/02-authentication-authorization.md)
+- [Milestone 3: Incident Management Core](./docs/milestones/03-incident-management-core.md)
 - [Architecture Overview](./docs/architecture/overview.md)
 - [ER Diagram](./docs/architecture/er-diagram.md)
 - [Security Baseline](./docs/architecture/security-baseline.md)
@@ -280,20 +303,21 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 - [ADR 0004: AI Provider Abstractions](./docs/architecture/adr/0004-use-provider-abstractions-for-ai.md)
 - [ADR 0005: Stateful Refresh Token Sessions](./docs/architecture/adr/0005-use-stateful-refresh-token-sessions.md)
 - [ADR 0006: Data-Backed RBAC](./docs/architecture/adr/0006-use-data-backed-rbac.md)
+- [ADR 0007: Incident Aggregate and State Machine](./docs/architecture/adr/0007-use-incident-aggregate-state-machine.md)
 
 ## Roadmap
 
 ```text
-✅ Architecture Foundation
+[done] Architecture Foundation
    |
    v
-✅ Authentication Backend
+[done] Authentication Backend
    |
    v
-🚧 Incident Management and Database Integration
+[done] Incident Management Core
    |
    v
-API Operations
+[current] API Operations
    |
    v
 Monitoring
@@ -308,10 +332,10 @@ AI Copilot
 Deployment Hardening
 ```
 
-1. Milestone 1: Architecture Foundation — released
-2. Milestone 2: Authentication Backend — released
-3. Milestone 3: Incident Management and Database Integration — current focus
-4. Milestone 4: API Operations
+1. Milestone 1: Architecture Foundation - released
+2. Milestone 2: Authentication Backend - released
+3. Milestone 3: Incident Management Core - released through `v0.5.0`
+4. Milestone 4: API Operations - current planning focus
 5. Milestone 5: Monitoring and Observability
 6. Milestone 6: Notifications and Collaboration
 7. Milestone 7: AI Copilot Provider Abstraction

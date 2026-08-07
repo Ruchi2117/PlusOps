@@ -230,6 +230,13 @@ class FakeTokenService implements TokenServicePort {
     token: "signed-access-token",
     expiresAt: new Date("2026-08-05T00:15:00.000Z")
   }));
+  verifyAccessToken = vi.fn(async () => ({
+    sub: "user-1",
+    email: "developer@plusops.dev",
+    sessionId: "session-1",
+    roles: ["developer"] as UserRole[],
+    permissions: ["incidents:read", "profile:read"]
+  }));
   createRefreshToken = vi.fn(async () => ({
     rawToken: "raw-refresh-token",
     tokenHash: "hashed-refresh-token",

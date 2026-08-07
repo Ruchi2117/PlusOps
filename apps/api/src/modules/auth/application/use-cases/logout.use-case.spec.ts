@@ -141,6 +141,7 @@ class FakeSessionRepository implements AuthSessionRepositoryPort {
 
 class FakeTokenService implements TokenServicePort {
   signAccessToken = vi.fn();
+  verifyAccessToken = vi.fn();
   createRefreshToken = vi.fn();
   createEmailVerificationToken = vi.fn();
   createPasswordResetToken = vi.fn();

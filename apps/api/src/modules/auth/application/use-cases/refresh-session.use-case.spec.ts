@@ -224,12 +224,13 @@ class FakeSessionRepository implements AuthSessionRepositoryPort {
   findRefreshTokenByHash = vi.fn(async (): Promise<RefreshTokenRecord | null> =>
     createRefreshToken()
   );
-  rotateRefreshToken = vi.fn(async (input: RotateRefreshTokenInput): Promise<RefreshTokenRecord | null> =>
-    createRefreshToken({
-      id: "refresh-token-2",
-      tokenHash: input.nextTokenHash,
-      expiresAt: input.nextTokenExpiresAt
-    })
+  rotateRefreshToken = vi.fn(
+    async (input: RotateRefreshTokenInput): Promise<RefreshTokenRecord | null> =>
+      createRefreshToken({
+        id: "refresh-token-2",
+        tokenHash: input.nextTokenHash,
+        expiresAt: input.nextTokenExpiresAt
+      })
   );
   touchSession = vi.fn(async () => undefined);
   listUserSessions = vi.fn(async () => [] as AuthSession[]);
@@ -241,6 +242,13 @@ class FakeTokenService implements TokenServicePort {
   signAccessToken = vi.fn(async () => ({
     token: "new-access-token",
     expiresAt: new Date("2026-08-05T00:15:00.000Z")
+  }));
+  verifyAccessToken = vi.fn(async () => ({
+    sub: "user-1",
+    email: "developer@plusops.dev",
+    sessionId: "session-1",
+    roles: ["developer"] as UserRole[],
+    permissions: ["incidents:read", "profile:read"]
   }));
   createRefreshToken = vi.fn(async () => ({
     rawToken: "raw-next-refresh-token",

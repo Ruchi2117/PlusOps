@@ -13,6 +13,11 @@ export type SignedAccessToken = {
   expiresAt: Date;
 };
 
+export type VerifiedAccessToken = AccessTokenPayload & {
+  exp?: number;
+  iat?: number;
+};
+
 export type GeneratedOpaqueToken = {
   rawToken: string;
   tokenHash: string;
@@ -21,6 +26,7 @@ export type GeneratedOpaqueToken = {
 
 export interface TokenServicePort {
   signAccessToken(payload: AccessTokenPayload): Promise<SignedAccessToken>;
+  verifyAccessToken(token: string): Promise<VerifiedAccessToken>;
   createRefreshToken(): Promise<GeneratedOpaqueToken>;
   createEmailVerificationToken(): Promise<GeneratedOpaqueToken>;
   createPasswordResetToken(): Promise<GeneratedOpaqueToken>;

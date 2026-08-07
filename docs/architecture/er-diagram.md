@@ -15,8 +15,16 @@ erDiagram
   TEAM ||--o{ TEAM_MEMBER : has
   TEAM ||--o{ SERVICE : owns
   SERVICE ||--o{ INCIDENT : experiences
+  USER ||--o{ INCIDENT : reports
   USER ||--o{ INCIDENT : assigned
   INCIDENT ||--o{ INCIDENT_COMMENT : contains
+  INCIDENT ||--o{ INCIDENT_MENTION : mentions
+  INCIDENT ||--o{ INCIDENT_ATTACHMENT : stores
+  INCIDENT ||--o{ INCIDENT_TIMELINE_EVENT : records
+  INCIDENT_COMMENT ||--o{ INCIDENT_MENTION : contains
+  USER ||--o{ INCIDENT_MENTION : mentioned
+  USER ||--o{ INCIDENT_ATTACHMENT : uploads
+  USER ||--o{ INCIDENT_TIMELINE_EVENT : performs
   USER ||--o{ AUDIT_LOG : performs
 
   USER {
@@ -142,13 +150,19 @@ erDiagram
   INCIDENT {
     string id PK
     string title
+    string description
     string severity
     string priority
     string status
     string serviceId FK
+    string reporterId FK
     string assigneeId FK
+    string customerImpact
     datetime startedAt
     datetime resolvedAt
+    datetime closedAt
+    datetime createdAt
+    datetime updatedAt
     datetime deletedAt
   }
 
@@ -157,6 +171,39 @@ erDiagram
     string incidentId FK
     string authorId FK
     string body
+    datetime editedAt
+    datetime createdAt
+    datetime deletedAt
+  }
+
+  INCIDENT_MENTION {
+    string id PK
+    string incidentId FK
+    string commentId FK
+    string mentionedUserId FK
+    string handle
+    datetime createdAt
+  }
+
+  INCIDENT_ATTACHMENT {
+    string id PK
+    string incidentId FK
+    string uploadedByUserId FK
+    string filename
+    string contentType
+    int size
+    string storageKey UK
+    datetime uploadedAt
+    datetime deletedAt
+  }
+
+  INCIDENT_TIMELINE_EVENT {
+    string id PK
+    string incidentId FK
+    string actorUserId FK
+    string type
+    string message
+    json metadata
     datetime createdAt
   }
 

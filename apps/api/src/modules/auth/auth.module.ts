@@ -24,6 +24,8 @@ import { Argon2PasswordHasher } from "./infrastructure/security/argon2-password-
 import { JwtTokenService } from "./infrastructure/security/jwt-token.service";
 import { SystemClock } from "./infrastructure/time/system-clock";
 import { AuthController } from "./presentation/http/auth.controller";
+import { AccessTokenGuard } from "./presentation/http/guards/access-token.guard";
+import { PermissionsGuard } from "./presentation/http/guards/permissions.guard";
 import { RefreshTokenCookieService } from "./presentation/http/refresh-token-cookie.service";
 
 const authProviders = [
@@ -74,11 +76,13 @@ const authProviderTokens = [
     ...authProviders,
     PrismaAuthRoleCatalogSeeder,
     RefreshTokenCookieService,
+    AccessTokenGuard,
+    PermissionsGuard,
     LoginUseCase,
     LogoutUseCase,
     RefreshSessionUseCase,
     SignupUseCase
   ],
-  exports: authProviderTokens
+  exports: [...authProviderTokens, AccessTokenGuard, PermissionsGuard]
 })
 export class AuthModule {}
