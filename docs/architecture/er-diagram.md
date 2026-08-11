@@ -14,6 +14,14 @@ erDiagram
   USER ||--o{ OAUTH_ACCOUNT : links
   TEAM ||--o{ TEAM_MEMBER : has
   TEAM ||--o{ SERVICE : owns
+  SERVICE ||--o{ SERVICE_ENVIRONMENT : runs_in
+  ENVIRONMENT ||--o{ SERVICE_ENVIRONMENT : hosts
+  SERVICE ||--o{ SERVICE_DEPENDENCY : upstream
+  SERVICE ||--o{ SERVICE_DEPENDENCY : downstream
+  SERVICE ||--o{ DEPLOYMENT : receives
+  ENVIRONMENT ||--o{ DEPLOYMENT : targets
+  USER ||--o{ SERVICE_DEPENDENCY : creates
+  USER ||--o{ DEPLOYMENT : deploys
   SERVICE ||--o{ INCIDENT : experiences
   USER ||--o{ INCIDENT : reports
   USER ||--o{ INCIDENT : assigned
@@ -140,11 +148,62 @@ erDiagram
     string id PK
     string name
     string slug UK
+    string description
     string ownerTeamId FK
+    string repositoryUrl
+    string apiBaseUrl
+    string documentationUrl
+    string runbookUrl
+    string lifecycleStatus
+    string visibility
     int tier
     datetime createdAt
     datetime updatedAt
     datetime deletedAt
+  }
+
+  ENVIRONMENT {
+    string id PK
+    string name
+    string slug UK
+    string type
+    string description
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+  }
+
+  SERVICE_ENVIRONMENT {
+    string id PK
+    string serviceId FK
+    string environmentId FK
+    string baseUrl
+    datetime createdAt
+    datetime deletedAt
+  }
+
+  SERVICE_DEPENDENCY {
+    string id PK
+    string upstreamServiceId FK
+    string downstreamServiceId FK
+    string description
+    string createdByUserId FK
+    datetime createdAt
+    datetime deletedAt
+  }
+
+  DEPLOYMENT {
+    string id PK
+    string serviceId FK
+    string environmentId FK
+    string version
+    string commitSha
+    string repositoryUrl
+    string status
+    string deployedByUserId FK
+    datetime startedAt
+    datetime finishedAt
+    datetime createdAt
   }
 
   INCIDENT {

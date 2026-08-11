@@ -31,6 +31,34 @@ enum IncidentStatus {
   CLOSED
 }
 
+enum ServiceLifecycleStatus {
+  EXPERIMENTAL
+  ACTIVE
+  DEPRECATED
+  ARCHIVED
+}
+
+enum ServiceVisibility {
+  PRIVATE
+  INTERNAL
+  PUBLIC
+}
+
+enum EnvironmentType {
+  DEVELOPMENT
+  STAGING
+  PRODUCTION
+  PREVIEW
+}
+
+enum DeploymentStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  ROLLED_BACK
+}
+
 model User {
   id                      String                   @id @default(uuid())
   email                   String                   @unique
@@ -54,6 +82,8 @@ model User {
   incidentTimelineEvents  IncidentTimelineEvent[]
   incidentMentions        IncidentMention[]        @relation("IncidentMentionedUser")
   uploadedAttachments     IncidentAttachment[]     @relation("IncidentAttachmentUploader")
+  serviceDependencies     ServiceDependency[]      @relation("ServiceDependencyCreator")
+  serviceDeployments      Deployment[]             @relation("DeploymentActor")
   auditLogs               AuditLog[]
 
   @@index([emailVerifiedAt])
@@ -215,20 +245,103 @@ model TeamMember {
 }
 
 model Service {
-  id          String     @id @default(uuid())
-  name        String
-  slug        String     @unique
-  description String?
-  ownerTeamId String
-  tier        Int        @default(2)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
-  ownerTeam   Team       @relation(fields: [ownerTeamId], references: [id])
-  incidents   Incident[]
+  id                     String                 @id @default(uuid())
+  name                   String
+  slug                   String                 @unique
+  description            String?
+  ownerTeamId            String
+  repositoryUrl          String?
+  apiBaseUrl             String?
+  documentationUrl       String?
+  runbookUrl             String?
+  lifecycleStatus        ServiceLifecycleStatus @default(ACTIVE)
+  visibility             ServiceVisibility      @default(INTERNAL)
+  tier                   Int                    @default(2)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  deletedAt              DateTime?
+  ownerTeam              Team                   @relation(fields: [ownerTeamId], references: [id])
+  incidents              Incident[]
+  environments           ServiceEnvironment[]
+  upstreamDependencies   ServiceDependency[]    @relation("ServiceDependencyUpstream")
+  downstreamDependencies ServiceDependency[]    @relation("ServiceDependencyDownstream")
+  deployments            Deployment[]
 
   @@index([ownerTeamId])
+  @@index([lifecycleStatus])
+  @@index([visibility])
   @@index([deletedAt])
+}
+
+model Environment {
+  id          String               @id @default(uuid())
+  name        String
+  slug        String               @unique
+  type        EnvironmentType
+  description String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  deletedAt   DateTime?
+  services    ServiceEnvironment[]
+  deployments Deployment[]
+
+  @@index([type])
+  @@index([deletedAt])
+}
+
+model ServiceEnvironment {
+  id            String      @id @default(uuid())
+  serviceId     String
+  environmentId String
+  baseUrl       String?
+  createdAt     DateTime    @default(now())
+  deletedAt     DateTime?
+  service       Service     @relation(fields: [serviceId], references: [id])
+  environment   Environment @relation(fields: [environmentId], references: [id])
+
+  @@unique([serviceId, environmentId])
+  @@index([environmentId])
+  @@index([deletedAt])
+}
+
+model ServiceDependency {
+  id                  String    @id @default(uuid())
+  upstreamServiceId   String
+  downstreamServiceId String
+  description         String?
+  createdByUserId     String?
+  createdAt           DateTime  @default(now())
+  deletedAt           DateTime?
+  upstreamService     Service   @relation("ServiceDependencyUpstream", fields: [upstreamServiceId], references: [id])
+  downstreamService   Service   @relation("ServiceDependencyDownstream", fields: [downstreamServiceId], references: [id])
+  createdBy           User?     @relation("ServiceDependencyCreator", fields: [createdByUserId], references: [id])
+
+  @@unique([upstreamServiceId, downstreamServiceId])
+  @@index([downstreamServiceId])
+  @@index([createdByUserId])
+  @@index([deletedAt])
+}
+
+model Deployment {
+  id               String           @id @default(uuid())
+  serviceId        String
+  environmentId    String
+  version          String
+  commitSha        String?
+  repositoryUrl    String?
+  status           DeploymentStatus @default(PENDING)
+  deployedByUserId String?
+  startedAt        DateTime
+  finishedAt       DateTime?
+  createdAt        DateTime         @default(now())
+  service          Service          @relation(fields: [serviceId], references: [id])
+  environment      Environment      @relation(fields: [environmentId], references: [id])
+  deployedBy       User?            @relation("DeploymentActor", fields: [deployedByUserId], references: [id])
+
+  @@index([serviceId, startedAt])
+  @@index([environmentId, startedAt])
+  @@index([status])
+  @@index([deployedByUserId])
 }
 
 model Incident {
@@ -266,15 +379,15 @@ model Incident {
 }
 
 model IncidentComment {
-  id         String    @id @default(uuid())
+  id         String            @id @default(uuid())
   incidentId String
   authorId   String
   body       String
   editedAt   DateTime?
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime          @default(now())
   deletedAt  DateTime?
-  incident   Incident  @relation(fields: [incidentId], references: [id])
-  author     User      @relation(fields: [authorId], references: [id])
+  incident   Incident          @relation(fields: [incidentId], references: [id])
+  author     User              @relation(fields: [authorId], references: [id])
   mentions   IncidentMention[]
 
   @@index([incidentId, createdAt])

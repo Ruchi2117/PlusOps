@@ -26,17 +26,43 @@ flowchart TD
   API["HTTP API"] --> Auth["Auth & Sessions"]
   API --> Incidents["Incident Management"]
   API --> Services["Service Catalog"]
-  API --> ApiOps["API Management"]
+  API --> ApiOps["API Operations"]
   API --> Monitoring["Monitoring"]
   API --> Copilot["AI Copilot"]
   API --> Notifications["Notifications"]
   API --> Users["Users / Teams / RBAC"]
 
+  Services --> Ownership["Ownership Metadata"]
+  Services --> Dependencies["Dependency Graph"]
+  Services --> Environments["Runtime Environments"]
+  Services --> Deployments["Deployment Records"]
   Incidents --> Audit["Audit Log"]
+  Incidents --> Services
+  Monitoring --> Services
   Monitoring --> Alerts["Alerts"]
   Copilot --> ProviderAbstraction["AI Provider Abstraction"]
   Notifications --> SlackEmail["Slack / Email / Browser"]
 ```
+
+## Service Catalog Architecture
+
+Milestone 4 starts observability from the service boundary instead of from raw infrastructure resources.
+
+```mermaid
+flowchart TD
+  Controller["Service Controller"] --> Guards["Access Token and Permission Guards"]
+  Guards --> UseCases["Service Catalog Use Cases"]
+  UseCases --> Domain["Service and Dependency Domain"]
+  UseCases --> Ports["Repository Ports"]
+  Ports --> PrismaAdapters["Prisma Service Repositories"]
+  PrismaAdapters --> Postgres["PostgreSQL"]
+
+  Domain --> Metadata["Ownership, Lifecycle, Visibility, Tier"]
+  Domain --> GraphRules["Dependency Graph Rules"]
+  UseCases --> Audit["Audit Log"]
+```
+
+Services are stable ownership boundaries. Incidents, deployments, metrics, health summaries, alerts, and runbooks can all attach to a service without coupling PlusOps to transient pods, containers, or hosts. Phase 1 includes service metadata, team ownership, environments, dependencies, deployment records, RBAC, soft archive, pagination, filtering, sorting, Swagger metadata, and graph cycle prevention. It intentionally does not ingest metrics, compute health, evaluate alerts, render dashboards, or expose frontend workflows yet.
 
 ## Incident Domain Architecture
 

@@ -25,7 +25,12 @@ export type AuthAuditAction =
   | "incident.comment_edited"
   | "incident.comment_deleted"
   | "incident.attachment_added"
-  | "incident.attachment_deleted";
+  | "incident.attachment_deleted"
+  | "service.created"
+  | "service.updated"
+  | "service.archived"
+  | "service.dependency_registered"
+  | "service.dependency_removed";
 
 export type RecordAuthAuditEventInput = {
   actorUserId: string | null;
@@ -37,7 +42,9 @@ export type RecordAuthAuditEventInput = {
     | "Role"
     | "Incident"
     | "IncidentComment"
-    | "IncidentAttachment";
+    | "IncidentAttachment"
+    | "Service"
+    | "ServiceDependency";
   entityId: string;
   metadata?: Record<string, unknown>;
 };

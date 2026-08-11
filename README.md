@@ -7,7 +7,9 @@ AI-powered internal developer platform and incident management system for engine
 
 PlusOps is a production-minded SaaS project built incrementally to demonstrate modern full-stack engineering practices. The long-term product vision is to help engineering teams manage incidents, understand service health, inspect APIs, collaborate during operational events, and use AI assistance to improve developer productivity.
 
-This repository is under active development. The current stable release is **v0.5.0: Incident Collaboration Layer**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
+This repository is under active development. The current stable release is **v0.6.0: Service Catalog Foundation**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
+
+Current work is focused on **Milestone 4: Observability and Monitoring**, with the released Service Catalog foundation now acting as the backbone for future metrics, health, deployments, and dependency views.
 
 ## Project Status
 
@@ -18,10 +20,11 @@ This repository is under active development. The current stable release is **v0.
 - [x] `v0.3.0` - Incident Lifecycle Operations
 - [x] `v0.4.0` - Incident Workflow Engine
 - [x] `v0.5.0` - Incident Collaboration Layer
+- [x] `v0.6.0` - Service Catalog Foundation
 
 ### Current Focus
 
-- Milestone 4 - API Operations planning
+- Milestone 4 Phase 2 - Metrics ingestion and service health summaries
 
 ### Milestone 3 Progress
 
@@ -32,11 +35,17 @@ This repository is under active development. The current stable release is **v0.
 - [x] Phase 4 - Incident workflow engine
 - [x] Phase 5 - Collaboration layer backend
 
+### Milestone 4 Progress
+
+- [x] Phase 0 - Observability and monitoring concepts
+- [x] Phase 1 - Service catalog and domain model
+- [ ] Phase 2 - Metrics ingestion and service health summaries
+
 ## Latest Release
 
-**Current Stable Release:** `v0.5.0 - Incident Collaboration Layer`
+**Current Stable Release:** `v0.6.0 - Service Catalog Foundation`
 
-The current backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, and collaboration APIs for comments, mentions, attachment metadata, and read-only activity timelines.
+The current backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, and the Service Catalog foundation for ownership metadata, environments, dependencies, deployment records, RBAC, audit evidence, and future service health workflows.
 
 ## Releases
 
@@ -47,6 +56,7 @@ The current backend includes production-oriented authentication, incident lifecy
 | `v0.3.0` | Released | Incident lifecycle operations, Prisma repositories, REST API, audit and timeline evidence |
 | `v0.4.0` | Released | Incident workflow engine, assignment, severity changes, status transitions, resolve, reopen, close |
 | `v0.5.0` | Released | Collaboration layer, comments, mentions, attachment metadata, read-only activity timeline |
+| `v0.6.0` | Released | Service catalog foundation, ownership metadata, environments, dependencies, deployments schema |
 
 ## Why PlusOps Exists
 
@@ -76,6 +86,8 @@ Suggested first screenshot:
 - Incident workflow engine: assignment, status transitions, severity changes, resolve, reopen, close
 - Incident collaboration backend: comments, mentions, attachment metadata, read-only activity timeline
 - Incident timeline event persistence for lifecycle and workflow changes
+- Service catalog foundation: service ownership, metadata, lifecycle, visibility, environments, dependencies, and deployment records
+- Service catalog REST API with RBAC, soft archive, pagination, filtering, sorting, and Swagger metadata
 - Incident DTO validation, pagination, filtering, sorting, and Swagger metadata
 - Clean Architecture module boundaries
 - Shared TypeScript/Zod contracts
@@ -84,7 +96,8 @@ Suggested first screenshot:
 
 ### In Progress
 
-- Milestone 4 planning pending approval
+- Metrics ingestion and service health summaries
+- Service-centric monitoring design
 
 ### Planned
 
@@ -94,7 +107,8 @@ Suggested first screenshot:
 - Notifications and realtime collaboration
 - API operations workflows
 - Monitoring ingestion
-- Notifications and collaboration
+- Service health summaries
+- Alerting and notification delivery
 - AI copilot provider integrations
 - Production deployment hardening
 
@@ -287,13 +301,14 @@ pnpm test
 pnpm build
 ```
 
-Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Broader integration and end-to-end coverage will grow as the frontend arrives.
+Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog domain, permission, use-case, controller, DTO validation, repository, soft-delete, and dependency graph tests. Broader integration and end-to-end coverage will grow as the frontend arrives.
 
 ## Documentation
 
 - [Milestone 1: Architecture Foundation](./docs/milestones/01-architecture.md)
 - [Milestone 2: Authentication and Authorization](./docs/milestones/02-authentication-authorization.md)
 - [Milestone 3: Incident Management Core](./docs/milestones/03-incident-management-core.md)
+- [Milestone 4: Observability and Monitoring](./docs/milestones/04-observability-monitoring.md)
 - [Architecture Overview](./docs/architecture/overview.md)
 - [ER Diagram](./docs/architecture/er-diagram.md)
 - [Security Baseline](./docs/architecture/security-baseline.md)
@@ -304,6 +319,7 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 - [ADR 0005: Stateful Refresh Token Sessions](./docs/architecture/adr/0005-use-stateful-refresh-token-sessions.md)
 - [ADR 0006: Data-Backed RBAC](./docs/architecture/adr/0006-use-data-backed-rbac.md)
 - [ADR 0007: Incident Aggregate and State Machine](./docs/architecture/adr/0007-use-incident-aggregate-state-machine.md)
+- [ADR 0008: Service-Centric Observability](./docs/architecture/adr/0008-use-service-centric-observability.md)
 
 ## Roadmap
 
@@ -317,10 +333,10 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 [done] Incident Management Core
    |
    v
-[current] API Operations
+[current] Observability and Monitoring
    |
    v
-Monitoring
+API Operations
    |
    v
 Notifications and Collaboration
@@ -335,8 +351,8 @@ Deployment Hardening
 1. Milestone 1: Architecture Foundation - released
 2. Milestone 2: Authentication Backend - released
 3. Milestone 3: Incident Management Core - released through `v0.5.0`
-4. Milestone 4: API Operations - current planning focus
-5. Milestone 5: Monitoring and Observability
+4. Milestone 4: Observability and Monitoring - released through `v0.6.0`, current Phase 2 focus
+5. Milestone 5: API Operations
 6. Milestone 6: Notifications and Collaboration
 7. Milestone 7: AI Copilot Provider Abstraction
 8. Milestone 8: Deployment Hardening
