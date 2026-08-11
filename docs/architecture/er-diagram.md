@@ -19,9 +19,16 @@ erDiagram
   SERVICE ||--o{ SERVICE_DEPENDENCY : upstream
   SERVICE ||--o{ SERVICE_DEPENDENCY : downstream
   SERVICE ||--o{ DEPLOYMENT : receives
+  SERVICE ||--o{ HEALTH_CHECK : exposes
+  SERVICE ||--o{ HEALTH_CHECK_RESULT : records
+  SERVICE ||--o{ SERVICE_HEALTH_EVALUATION : evaluates
+  SERVICE ||--o{ SERVICE_HEALTH_TIMELINE_EVENT : changes
+  HEALTH_CHECK ||--o{ HEALTH_CHECK_RESULT : produces
+  HEALTH_CHECK ||--o{ SERVICE_HEALTH_TIMELINE_EVENT : explains
   ENVIRONMENT ||--o{ DEPLOYMENT : targets
   USER ||--o{ SERVICE_DEPENDENCY : creates
   USER ||--o{ DEPLOYMENT : deploys
+  USER ||--o{ SERVICE_HEALTH_TIMELINE_EVENT : performs
   SERVICE ||--o{ INCIDENT : experiences
   USER ||--o{ INCIDENT : reports
   USER ||--o{ INCIDENT : assigned
@@ -203,6 +210,57 @@ erDiagram
     string deployedByUserId FK
     datetime startedAt
     datetime finishedAt
+    datetime createdAt
+  }
+
+  HEALTH_CHECK {
+    string id PK
+    string serviceId FK
+    string name
+    string type
+    string target
+    string description
+    boolean isCritical
+    boolean isEnabled
+    int intervalSeconds
+    int timeoutMs
+    int staleAfterSeconds
+    json configuration
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+  }
+
+  HEALTH_CHECK_RESULT {
+    string id PK
+    string serviceId FK
+    string healthCheckId FK
+    string status
+    int responseTimeMs
+    string message
+    datetime checkedAt
+    datetime createdAt
+  }
+
+  SERVICE_HEALTH_EVALUATION {
+    string id PK
+    string serviceId FK
+    string status
+    string summary
+    datetime evaluatedAt
+    datetime createdAt
+  }
+
+  SERVICE_HEALTH_TIMELINE_EVENT {
+    string id PK
+    string serviceId FK
+    string healthCheckId FK
+    string actorUserId FK
+    string type
+    string message
+    string fromStatus
+    string toStatus
+    json metadata
     datetime createdAt
   }
 

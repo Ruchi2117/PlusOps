@@ -59,16 +59,32 @@ enum DeploymentStatus {
   ROLLED_BACK
 }
 
+enum ServiceHealthStatus {
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+  UNKNOWN
+}
+
+enum HealthCheckType {
+  HTTP_ENDPOINT
+  TCP
+  SYNTHETIC
+  DEPENDENCY
+  DATABASE
+  CACHE
+}
+
 model User {
-  id                      String                   @id @default(uuid())
-  email                   String                   @unique
+  id                      String                       @id @default(uuid())
+  email                   String                       @unique
   name                    String
   passwordHash            String?
-  isActive                Boolean                  @default(true)
+  isActive                Boolean                      @default(true)
   emailVerifiedAt         DateTime?
   lastLoginAt             DateTime?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
   deletedAt               DateTime?
   roleAssignments         UserRole[]
   sessions                AuthSession[]
@@ -76,14 +92,15 @@ model User {
   passwordResetTokens     PasswordResetToken[]
   oauthAccounts           OAuthAccount[]
   teamMemberships         TeamMember[]
-  reportedIncidents       Incident[]               @relation("IncidentReporter")
-  assignedIncidents       Incident[]               @relation("IncidentAssignee")
+  reportedIncidents       Incident[]                   @relation("IncidentReporter")
+  assignedIncidents       Incident[]                   @relation("IncidentAssignee")
   comments                IncidentComment[]
   incidentTimelineEvents  IncidentTimelineEvent[]
-  incidentMentions        IncidentMention[]        @relation("IncidentMentionedUser")
-  uploadedAttachments     IncidentAttachment[]     @relation("IncidentAttachmentUploader")
-  serviceDependencies     ServiceDependency[]      @relation("ServiceDependencyCreator")
-  serviceDeployments      Deployment[]             @relation("DeploymentActor")
+  incidentMentions        IncidentMention[]            @relation("IncidentMentionedUser")
+  uploadedAttachments     IncidentAttachment[]         @relation("IncidentAttachmentUploader")
+  serviceDependencies     ServiceDependency[]          @relation("ServiceDependencyCreator")
+  serviceDeployments      Deployment[]                 @relation("DeploymentActor")
+  serviceHealthEvents     ServiceHealthTimelineEvent[] @relation("ServiceHealthTimelineActor")
   auditLogs               AuditLog[]
 
   @@index([emailVerifiedAt])
@@ -245,27 +262,31 @@ model TeamMember {
 }
 
 model Service {
-  id                     String                 @id @default(uuid())
+  id                     String                       @id @default(uuid())
   name                   String
-  slug                   String                 @unique
+  slug                   String                       @unique
   description            String?
   ownerTeamId            String
   repositoryUrl          String?
   apiBaseUrl             String?
   documentationUrl       String?
   runbookUrl             String?
-  lifecycleStatus        ServiceLifecycleStatus @default(ACTIVE)
-  visibility             ServiceVisibility      @default(INTERNAL)
-  tier                   Int                    @default(2)
-  createdAt              DateTime               @default(now())
-  updatedAt              DateTime               @updatedAt
+  lifecycleStatus        ServiceLifecycleStatus       @default(ACTIVE)
+  visibility             ServiceVisibility            @default(INTERNAL)
+  tier                   Int                          @default(2)
+  createdAt              DateTime                     @default(now())
+  updatedAt              DateTime                     @updatedAt
   deletedAt              DateTime?
-  ownerTeam              Team                   @relation(fields: [ownerTeamId], references: [id])
+  ownerTeam              Team                         @relation(fields: [ownerTeamId], references: [id])
   incidents              Incident[]
   environments           ServiceEnvironment[]
-  upstreamDependencies   ServiceDependency[]    @relation("ServiceDependencyUpstream")
-  downstreamDependencies ServiceDependency[]    @relation("ServiceDependencyDownstream")
+  upstreamDependencies   ServiceDependency[]          @relation("ServiceDependencyUpstream")
+  downstreamDependencies ServiceDependency[]          @relation("ServiceDependencyDownstream")
   deployments            Deployment[]
+  healthChecks           HealthCheck[]
+  healthResults          HealthCheckResult[]
+  healthEvaluations      ServiceHealthEvaluation[]
+  healthTimelineEvents   ServiceHealthTimelineEvent[]
 
   @@index([ownerTeamId])
   @@index([lifecycleStatus])
@@ -342,6 +363,83 @@ model Deployment {
   @@index([environmentId, startedAt])
   @@index([status])
   @@index([deployedByUserId])
+}
+
+model HealthCheck {
+  id                String                       @id @default(uuid())
+  serviceId         String
+  name              String
+  type              HealthCheckType
+  target            String?
+  description       String?
+  isCritical        Boolean                      @default(true)
+  isEnabled         Boolean                      @default(true)
+  intervalSeconds   Int                          @default(60)
+  timeoutMs         Int                          @default(5000)
+  staleAfterSeconds Int                          @default(300)
+  configuration     Json?
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+  deletedAt         DateTime?
+  service           Service                      @relation(fields: [serviceId], references: [id])
+  results           HealthCheckResult[]
+  timelineEvents    ServiceHealthTimelineEvent[]
+
+  @@index([serviceId])
+  @@index([type])
+  @@index([isEnabled])
+  @@index([deletedAt])
+}
+
+model HealthCheckResult {
+  id             String              @id @default(uuid())
+  serviceId      String
+  healthCheckId  String
+  status         ServiceHealthStatus
+  responseTimeMs Int?
+  message        String?
+  checkedAt      DateTime
+  createdAt      DateTime            @default(now())
+  service        Service             @relation(fields: [serviceId], references: [id])
+  healthCheck    HealthCheck         @relation(fields: [healthCheckId], references: [id])
+
+  @@index([healthCheckId, checkedAt])
+  @@index([serviceId, checkedAt])
+  @@index([status])
+}
+
+model ServiceHealthEvaluation {
+  id          String              @id @default(uuid())
+  serviceId   String
+  status      ServiceHealthStatus
+  summary     String
+  evaluatedAt DateTime
+  createdAt   DateTime            @default(now())
+  service     Service             @relation(fields: [serviceId], references: [id])
+
+  @@index([serviceId, evaluatedAt])
+  @@index([status])
+}
+
+model ServiceHealthTimelineEvent {
+  id            String               @id @default(uuid())
+  serviceId     String
+  healthCheckId String?
+  actorUserId   String?
+  type          String
+  message       String
+  fromStatus    ServiceHealthStatus?
+  toStatus      ServiceHealthStatus?
+  metadata      Json?
+  createdAt     DateTime             @default(now())
+  service       Service              @relation(fields: [serviceId], references: [id])
+  healthCheck   HealthCheck?         @relation(fields: [healthCheckId], references: [id])
+  actor         User?                @relation("ServiceHealthTimelineActor", fields: [actorUserId], references: [id])
+
+  @@index([serviceId, createdAt])
+  @@index([healthCheckId])
+  @@index([actorUserId])
+  @@index([type])
 }
 
 model Incident {

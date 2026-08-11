@@ -2,7 +2,15 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { describe, expect, it } from "vitest";
 
-import { CreateServiceDto, ListServicesQueryDto, RegisterServiceDependencyDto } from "./index";
+import {
+  CreateHealthCheckDto,
+  CreateServiceDto,
+  HealthHistoryQueryDto,
+  ListServicesQueryDto,
+  RegisterServiceDependencyDto,
+  RunHealthCheckDto,
+  UpdateHealthCheckDto
+} from "./index";
 
 describe("Service HTTP DTOs", () => {
   it("accepts and normalizes a valid create service payload", async () => {
@@ -99,6 +107,81 @@ describe("Service HTTP DTOs", () => {
     const errors = await validate(invalidDto);
     expect(errors.map((error) => error.property)).toEqual(
       expect.arrayContaining(["downstreamServiceId", "description"])
+    );
+  });
+
+  it("accepts and normalizes health check configuration payloads", async () => {
+    const dto = plainToInstance(CreateHealthCheckDto, {
+      name: "  Readiness  ",
+      type: "http_endpoint",
+      target: " https://api.plusops.dev/ready ",
+      isCritical: true,
+      intervalSeconds: 60,
+      timeoutMs: 5000,
+      configuration: { method: "GET" }
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors).toHaveLength(0);
+    expect(dto.name).toBe("Readiness");
+    expect(dto.target).toBe("https://api.plusops.dev/ready");
+  });
+
+  it("rejects invalid health check payloads", async () => {
+    const dto = plainToInstance(CreateHealthCheckDto, {
+      name: "R",
+      type: "icmp",
+      intervalSeconds: 5,
+      timeoutMs: 50,
+      configuration: ["not", "an", "object"]
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors.map((error) => error.property)).toEqual(
+      expect.arrayContaining(["name", "type", "intervalSeconds", "timeoutMs", "configuration"])
+    );
+  });
+
+  it("allows nullable health check fields during updates", async () => {
+    const dto = plainToInstance(UpdateHealthCheckDto, {
+      target: null,
+      description: null,
+      configuration: null
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors).toHaveLength(0);
+    expect(dto.target).toBeNull();
+  });
+
+  it("validates simulated health check runs and history pagination", async () => {
+    const runDto = plainToInstance(RunHealthCheckDto, {
+      status: "unhealthy",
+      responseTimeMs: 1200,
+      message: "  HTTP 500  "
+    });
+    const historyDto = plainToInstance(HealthHistoryQueryDto, {
+      page: "2",
+      pageSize: "10"
+    });
+
+    await expect(validate(runDto)).resolves.toHaveLength(0);
+    await expect(validate(historyDto)).resolves.toHaveLength(0);
+    expect(runDto.message).toBe("HTTP 500");
+    expect(historyDto.page).toBe(2);
+    expect(historyDto.pageSize).toBe(10);
+
+    const invalidRunDto = plainToInstance(RunHealthCheckDto, {
+      status: "sideways",
+      responseTimeMs: 700_000
+    });
+    const invalidRunErrors = await validate(invalidRunDto);
+
+    expect(invalidRunErrors.map((error) => error.property)).toEqual(
+      expect.arrayContaining(["status", "responseTimeMs"])
     );
   });
 });

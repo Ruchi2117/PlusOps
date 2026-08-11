@@ -30,7 +30,11 @@ export type AuthAuditAction =
   | "service.updated"
   | "service.archived"
   | "service.dependency_registered"
-  | "service.dependency_removed";
+  | "service.dependency_removed"
+  | "health_check.created"
+  | "health_check.updated"
+  | "health_check.deleted"
+  | "health_check.run";
 
 export type RecordAuthAuditEventInput = {
   actorUserId: string | null;
@@ -44,7 +48,9 @@ export type RecordAuthAuditEventInput = {
     | "IncidentComment"
     | "IncidentAttachment"
     | "Service"
-    | "ServiceDependency";
+    | "ServiceDependency"
+    | "HealthCheck"
+    | "ServiceHealthEvaluation";
   entityId: string;
   metadata?: Record<string, unknown>;
 };

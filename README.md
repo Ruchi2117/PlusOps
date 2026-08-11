@@ -9,7 +9,7 @@ PlusOps is a production-minded SaaS project built incrementally to demonstrate m
 
 This repository is under active development. The current stable release is **v0.6.0: Service Catalog Foundation**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
 
-Current work is focused on **Milestone 4: Observability and Monitoring**, with the released Service Catalog foundation now acting as the backbone for future metrics, health, deployments, and dependency views.
+Current work is focused on **Milestone 4: Observability and Monitoring**, with the released Service Catalog foundation now acting as the backbone for health checks, future metrics, deployments, and dependency views.
 
 ## Project Status
 
@@ -24,7 +24,7 @@ Current work is focused on **Milestone 4: Observability and Monitoring**, with t
 
 ### Current Focus
 
-- Milestone 4 Phase 2 - Metrics ingestion and service health summaries
+- Milestone 4 Phase 2 - Service Health Checks backend
 
 ### Milestone 3 Progress
 
@@ -39,13 +39,14 @@ Current work is focused on **Milestone 4: Observability and Monitoring**, with t
 
 - [x] Phase 0 - Observability and monitoring concepts
 - [x] Phase 1 - Service catalog and domain model
-- [ ] Phase 2 - Metrics ingestion and service health summaries
+- [x] Phase 2 - Service health checks backend
+- [ ] Phase 3 - Metrics ingestion
 
 ## Latest Release
 
 **Current Stable Release:** `v0.6.0 - Service Catalog Foundation`
 
-The current backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, and the Service Catalog foundation for ownership metadata, environments, dependencies, deployment records, RBAC, audit evidence, and future service health workflows.
+The current released backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, and the Service Catalog foundation for ownership metadata, environments, dependencies, deployment records, RBAC, audit evidence, and future service health workflows. The latest unreleased Milestone 4 work adds backend service health checks and simulated health evaluation.
 
 ## Releases
 
@@ -57,6 +58,7 @@ The current backend includes production-oriented authentication, incident lifecy
 | `v0.4.0` | Released | Incident workflow engine, assignment, severity changes, status transitions, resolve, reopen, close |
 | `v0.5.0` | Released | Collaboration layer, comments, mentions, attachment metadata, read-only activity timeline |
 | `v0.6.0` | Released | Service catalog foundation, ownership metadata, environments, dependencies, deployments schema |
+| Unreleased | In progress | Service health checks, health evaluation, health history, simulated check runs |
 
 ## Why PlusOps Exists
 
@@ -88,6 +90,9 @@ Suggested first screenshot:
 - Incident timeline event persistence for lifecycle and workflow changes
 - Service catalog foundation: service ownership, metadata, lifecycle, visibility, environments, dependencies, and deployment records
 - Service catalog REST API with RBAC, soft archive, pagination, filtering, sorting, and Swagger metadata
+- Service health checks backend: HTTP, TCP, synthetic, dependency, database, and cache check definitions
+- Service health evaluation with healthy, degraded, unhealthy, and unknown states
+- Simulated health check runs, health history, RBAC, audit logging, and timeline events
 - Incident DTO validation, pagination, filtering, sorting, and Swagger metadata
 - Clean Architecture module boundaries
 - Shared TypeScript/Zod contracts
@@ -96,7 +101,7 @@ Suggested first screenshot:
 
 ### In Progress
 
-- Metrics ingestion and service health summaries
+- Metrics ingestion
 - Service-centric monitoring design
 
 ### Planned
@@ -107,7 +112,6 @@ Suggested first screenshot:
 - Notifications and realtime collaboration
 - API operations workflows
 - Monitoring ingestion
-- Service health summaries
 - Alerting and notification delivery
 - AI copilot provider integrations
 - Production deployment hardening
@@ -179,6 +183,27 @@ Repository Ports
    |
    v
 Prisma
+   |
+   v
+PostgreSQL
+```
+
+Service health uses the same Clean Architecture boundary:
+
+```text
+Service Health Controller
+   |
+   v
+Health Use Cases
+   |
+   v
+Health Domain Evaluation
+   |
+   v
+Health Repository Ports
+   |
+   v
+Prisma Health Repositories
    |
    v
 PostgreSQL
@@ -301,7 +326,7 @@ pnpm test
 pnpm build
 ```
 
-Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog domain, permission, use-case, controller, DTO validation, repository, soft-delete, and dependency graph tests. Broader integration and end-to-end coverage will grow as the frontend arrives.
+Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog and service health domain, permission, use-case, controller, DTO validation, repository, soft-delete, dependency graph, health evaluation, timeline generation, and RBAC tests. Broader integration and end-to-end coverage will grow as the frontend arrives.
 
 ## Documentation
 
@@ -351,7 +376,7 @@ Deployment Hardening
 1. Milestone 1: Architecture Foundation - released
 2. Milestone 2: Authentication Backend - released
 3. Milestone 3: Incident Management Core - released through `v0.5.0`
-4. Milestone 4: Observability and Monitoring - released through `v0.6.0`, current Phase 2 focus
+4. Milestone 4: Observability and Monitoring - released through `v0.6.0`, Phase 2 health checks implemented locally
 5. Milestone 5: API Operations
 6. Milestone 6: Notifications and Collaboration
 7. Milestone 7: AI Copilot Provider Abstraction

@@ -36,6 +36,7 @@ flowchart TD
   Services --> Dependencies["Dependency Graph"]
   Services --> Environments["Runtime Environments"]
   Services --> Deployments["Deployment Records"]
+  Services --> HealthChecks["Health Checks"]
   Incidents --> Audit["Audit Log"]
   Incidents --> Services
   Monitoring --> Services
@@ -62,7 +63,27 @@ flowchart TD
   UseCases --> Audit["Audit Log"]
 ```
 
-Services are stable ownership boundaries. Incidents, deployments, metrics, health summaries, alerts, and runbooks can all attach to a service without coupling PlusOps to transient pods, containers, or hosts. Phase 1 includes service metadata, team ownership, environments, dependencies, deployment records, RBAC, soft archive, pagination, filtering, sorting, Swagger metadata, and graph cycle prevention. It intentionally does not ingest metrics, compute health, evaluate alerts, render dashboards, or expose frontend workflows yet.
+Services are stable ownership boundaries. Incidents, deployments, metrics, health checks, alerts, and runbooks can all attach to a service without coupling PlusOps to transient pods, containers, or hosts. Phase 1 includes service metadata, team ownership, environments, dependencies, deployment records, RBAC, soft archive, pagination, filtering, sorting, Swagger metadata, and graph cycle prevention. Phase 2 adds backend health check configuration, simulated check runs, service health evaluation, history, audit logging, and service health timeline events. It intentionally does not ingest metrics, evaluate alerts, render dashboards, or expose frontend workflows yet.
+
+## Service Health Architecture
+
+```mermaid
+flowchart TD
+  ServiceHealthController["Service Health Controller"] --> Guards["Access Token and Health Permission Guards"]
+  HealthChecksController["Health Checks Controller"] --> Guards
+  Guards --> HealthUseCases["Health Use Cases"]
+  HealthUseCases --> HealthDomain["Health Domain Evaluation"]
+  HealthUseCases --> HealthPorts["Health Repository Ports"]
+  HealthPorts --> HealthPrisma["Prisma Health Repositories"]
+  HealthPrisma --> Postgres["PostgreSQL"]
+  HealthUseCases --> Audit["Audit Log"]
+  HealthUseCases --> Timeline["Service Health Timeline"]
+
+  HealthDomain --> Rules["Critical, Optional, Stale, Disabled Check Rules"]
+  HealthDomain --> Status["Healthy / Degraded / Unhealthy / Unknown"]
+```
+
+Health checks are modeled before metrics because they are operational decision signals. A liveness or readiness check tells Kubernetes and load balancers whether a process should stay alive or receive traffic. Metrics explain trends and causes later; health checks establish whether the service can currently perform its expected work.
 
 ## Incident Domain Architecture
 
