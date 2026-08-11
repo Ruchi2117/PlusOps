@@ -164,7 +164,11 @@ function createServiceRepository(
     save: vi.fn(async () => undefined),
     findById: vi.fn(async (id: string) =>
       id === downstreamServiceId()
-        ? Service.restore({ ...service().toSnapshot(), id: downstreamServiceId(), slug: "identity-api" })
+        ? Service.restore({
+            ...service().toSnapshot(),
+            id: downstreamServiceId(),
+            slug: "identity-api"
+          })
         : service()
     ),
     findDetailById: vi.fn(async () => serviceDetail()),

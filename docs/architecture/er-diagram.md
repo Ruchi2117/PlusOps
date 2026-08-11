@@ -23,12 +23,35 @@ erDiagram
   SERVICE ||--o{ HEALTH_CHECK_RESULT : records
   SERVICE ||--o{ SERVICE_HEALTH_EVALUATION : evaluates
   SERVICE ||--o{ SERVICE_HEALTH_TIMELINE_EVENT : changes
+  SERVICE ||--o{ METRIC_DEFINITION : defines
+  SERVICE ||--o{ METRIC_SERIES : groups
+  SERVICE ||--o{ METRIC_SAMPLE : records
+  SERVICE ||--o{ SERVICE_METRIC_TIMELINE_EVENT : changes
+  SERVICE ||--o{ ALERT_RULE : owns
   HEALTH_CHECK ||--o{ HEALTH_CHECK_RESULT : produces
   HEALTH_CHECK ||--o{ SERVICE_HEALTH_TIMELINE_EVENT : explains
+  METRIC_RETENTION_POLICY ||--o{ METRIC_DEFINITION : applies
+  METRIC_RETENTION_POLICY ||--o{ METRIC_SAMPLE : retains
+  METRIC_DEFINITION ||--o{ METRIC_SERIES : has
+  METRIC_DEFINITION ||--o{ METRIC_SAMPLE : records
+  METRIC_DEFINITION ||--o{ SERVICE_METRIC_TIMELINE_EVENT : explains
+  METRIC_DEFINITION ||--o{ ALERT_RULE : powers
+  METRIC_SERIES ||--o{ METRIC_SAMPLE : contains
+  ALERT_RULE ||--o{ ALERT_EVALUATION : evaluates
+  ALERT_RULE ||--o{ ALERT_TIMELINE_EVENT : records
   ENVIRONMENT ||--o{ DEPLOYMENT : targets
   USER ||--o{ SERVICE_DEPENDENCY : creates
   USER ||--o{ DEPLOYMENT : deploys
   USER ||--o{ SERVICE_HEALTH_TIMELINE_EVENT : performs
+  USER ||--o{ SERVICE_METRIC_TIMELINE_EVENT : performs
+  USER ||--o{ ALERT_TIMELINE_EVENT : performs
+  USER ||--o{ AI_CONVERSATION : starts
+  USER ||--o{ PROMPT_TEMPLATE : creates
+  USER ||--o{ AI_AUDIT_EVENT : performs
+  PROVIDER_CONFIGURATION ||--o{ AI_CONVERSATION : powers
+  PROVIDER_CONFIGURATION ||--o{ AI_USAGE_RECORD : tracks
+  AI_CONVERSATION ||--o{ AI_CONVERSATION_MESSAGE : contains
+  AI_CONVERSATION ||--o{ AI_USAGE_RECORD : produces
   SERVICE ||--o{ INCIDENT : experiences
   USER ||--o{ INCIDENT : reports
   USER ||--o{ INCIDENT : assigned
@@ -260,6 +283,204 @@ erDiagram
     string message
     string fromStatus
     string toStatus
+    json metadata
+    datetime createdAt
+  }
+
+  METRIC_RETENTION_POLICY {
+    string id PK
+    string name UK
+    int retentionDays
+    int resolutionSeconds
+    boolean isDefault
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  METRIC_DEFINITION {
+    string id PK
+    string serviceId FK
+    string name
+    string displayName
+    string description
+    string type
+    string unit
+    string customUnit
+    string defaultAggregation
+    string retentionPolicyId FK
+    boolean isEnabled
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+  }
+
+  METRIC_SERIES {
+    string id PK
+    string metricDefinitionId FK
+    string serviceId FK
+    string labelHash
+    json labels
+    string source
+    datetime createdAt
+    datetime updatedAt
+    datetime lastSampleAt
+  }
+
+  METRIC_SAMPLE {
+    string id PK
+    string metricDefinitionId FK
+    string metricSeriesId FK
+    string serviceId FK
+    datetime timestamp
+    float value
+    json labels
+    string source
+    string retentionPolicyId FK
+    datetime createdAt
+  }
+
+  SERVICE_METRIC_TIMELINE_EVENT {
+    string id PK
+    string serviceId FK
+    string metricDefinitionId FK
+    string actorUserId FK
+    string type
+    string message
+    string fromValue
+    string toValue
+    json metadata
+    datetime createdAt
+  }
+
+  ALERT_RULE {
+    string id PK
+    string name
+    string description
+    string severity
+    string state
+    string metricName
+    string metricDefinitionId FK
+    string serviceId FK
+    json filters
+    string aggregation
+    float percentile
+    int evaluationWindowSeconds
+    string operator
+    float thresholdValue
+    float thresholdMin
+    float thresholdMax
+    boolean isEnabled
+    datetime mutedUntil
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+  }
+
+  ALERT_EVALUATION {
+    string id PK
+    string alertRuleId FK
+    string previousState
+    string state
+    float observedValue
+    string thresholdSummary
+    string message
+    datetime evaluatedAt
+    datetime createdAt
+  }
+
+  ALERT_TIMELINE_EVENT {
+    string id PK
+    string alertRuleId FK
+    string actorUserId FK
+    string type
+    string message
+    string fromState
+    string toState
+    json metadata
+    datetime createdAt
+  }
+
+  PROVIDER_CONFIGURATION {
+    string id PK
+    string provider UK
+    string displayName
+    string model
+    boolean isEnabled
+    int priority
+    int maxTokens
+    float temperature
+    float costPer1KInputTokens
+    float costPer1KOutputTokens
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  PROMPT_TEMPLATE {
+    string id PK
+    string key
+    int version
+    string name
+    string description
+    string feature
+    string systemPrompt
+    string userPrompt
+    json variables
+    boolean isActive
+    string createdByUserId FK
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  AI_CONVERSATION {
+    string id PK
+    string title
+    string feature
+    string provider
+    string model
+    string providerConfigId FK
+    string actorUserId FK
+    json context
+    datetime createdAt
+    datetime updatedAt
+    datetime deletedAt
+  }
+
+  AI_CONVERSATION_MESSAGE {
+    string id PK
+    string conversationId FK
+    string role
+    string content
+    json metadata
+    int tokenCount
+    datetime createdAt
+  }
+
+  AI_USAGE_RECORD {
+    string id PK
+    string provider
+    string model
+    string feature
+    string providerConfigId FK
+    string conversationId FK
+    string conversationMessageId
+    int promptTokens
+    int completionTokens
+    int totalTokens
+    int latencyMs
+    float estimatedCostUsd
+    string status
+    string errorMessage
+    datetime createdAt
+  }
+
+  AI_AUDIT_EVENT {
+    string id PK
+    string actorUserId FK
+    string action
+    string feature
+    string provider
+    string entityType
+    string entityId
     json metadata
     datetime createdAt
   }

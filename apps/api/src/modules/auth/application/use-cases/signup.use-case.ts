@@ -2,16 +2,8 @@ import { ConflictException, Inject, Injectable } from "@nestjs/common";
 import type { SignupRequest, SignupResponse } from "@plusops/contracts";
 
 import { SYSTEM_ROLES } from "../../authorization/permission-catalog";
-import {
-  AUTH_AUDIT_LOG,
-  AUTH_PASSWORD_HASHER,
-  AUTH_USER_REPOSITORY
-} from "../../auth.tokens";
-import type {
-  AuthAuditLogPort,
-  AuthUserRepositoryPort,
-  PasswordHasherPort
-} from "../ports";
+import { AUTH_AUDIT_LOG, AUTH_PASSWORD_HASHER, AUTH_USER_REPOSITORY } from "../../auth.tokens";
+import type { AuthAuditLogPort, AuthUserRepositoryPort, PasswordHasherPort } from "../ports";
 import { toCurrentUser } from "../mappers/current-user.mapper";
 
 @Injectable()

@@ -4,11 +4,18 @@ import { describe, expect, it } from "vitest";
 
 import {
   CreateHealthCheckDto,
+  CreateAlertRuleDto,
+  CreateMetricDefinitionDto,
   CreateServiceDto,
   HealthHistoryQueryDto,
+  ListAlertsQueryDto,
+  ListMetricsQueryDto,
   ListServicesQueryDto,
+  QueryMetricsDto,
   RegisterServiceDependencyDto,
   RunHealthCheckDto,
+  SubmitMetricSampleDto,
+  UpdateAlertRuleDto,
   UpdateHealthCheckDto
 } from "./index";
 
@@ -183,6 +190,144 @@ describe("Service HTTP DTOs", () => {
     expect(invalidRunErrors.map((error) => error.property)).toEqual(
       expect.arrayContaining(["status", "responseTimeMs"])
     );
+  });
+
+  it("validates metric definitions and normalizes metric names", async () => {
+    const dto = plainToInstance(CreateMetricDefinitionDto, {
+      serviceId: serviceId(),
+      name: " HTTP_REQUESTS_TOTAL ",
+      displayName: " HTTP Requests Total ",
+      type: "counter",
+      unit: "requests",
+      defaultAggregation: "rate"
+    });
+    const invalidDto = plainToInstance(CreateMetricDefinitionDto, {
+      serviceId: "not-a-uuid",
+      name: "HTTP Requests!",
+      displayName: "x",
+      type: "timer",
+      unit: "widgets",
+      defaultAggregation: "sideways"
+    });
+
+    await expect(validate(dto)).resolves.toHaveLength(0);
+    expect(dto.name).toBe("http_requests_total");
+    expect(dto.displayName).toBe("HTTP Requests Total");
+
+    const errors = await validate(invalidDto);
+    expect(errors.map((error) => error.property)).toEqual(
+      expect.arrayContaining([
+        "serviceId",
+        "name",
+        "displayName",
+        "type",
+        "unit",
+        "defaultAggregation"
+      ])
+    );
+  });
+
+  it("parses metric includeDeleted=false as false instead of truthy", async () => {
+    const dto = plainToInstance(ListMetricsQueryDto, {
+      includeDeleted: "false",
+      page: "2",
+      pageSize: "10"
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors).toHaveLength(0);
+    expect(dto.includeDeleted).toBe(false);
+    expect(dto.page).toBe(2);
+    expect(dto.pageSize).toBe(10);
+  });
+
+  it("validates metric sample submission and query payloads", async () => {
+    const sampleDto = plainToInstance(SubmitMetricSampleDto, {
+      value: 99.9,
+      labels: [{ key: " Environment ", value: " production " }]
+    });
+    const queryDto = plainToInstance(QueryMetricsDto, {
+      metricName: " Request_Success_Rate ",
+      startTime: "2026-08-11T09:00:00.000Z",
+      endTime: "2026-08-11T10:00:00.000Z",
+      filters: [{ key: "method", value: "GET" }],
+      groupBy: ["environment"],
+      aggregation: "average",
+      limit: 100
+    });
+    const invalidSampleDto = plainToInstance(SubmitMetricSampleDto, {
+      value: "not-a-number",
+      labels: [{ key: "bad-label!", value: "" }]
+    });
+
+    await expect(validate(sampleDto)).resolves.toHaveLength(0);
+    await expect(validate(queryDto)).resolves.toHaveLength(0);
+    expect(sampleDto.labels?.[0]).toEqual({
+      key: "environment",
+      value: "production"
+    });
+    expect(queryDto.metricName).toBe("request_success_rate");
+
+    const errors = await validate(invalidSampleDto);
+    expect(errors.map((error) => error.property)).toEqual(
+      expect.arrayContaining(["value", "labels"])
+    );
+  });
+
+  it("validates alert rules and transforms numeric condition fields", async () => {
+    const dto = plainToInstance(CreateAlertRuleDto, {
+      name: " High latency ",
+      severity: "critical",
+      condition: {
+        metricName: " HTTP_REQUEST_DURATION_MS ",
+        serviceId: serviceId(),
+        filters: [{ key: " Environment ", value: " production " }],
+        aggregation: "percentile",
+        percentile: "95",
+        evaluationWindowSeconds: "300",
+        threshold: { operator: "greater_than", value: "500" }
+      }
+    });
+    const invalidDto = plainToInstance(CreateAlertRuleDto, {
+      name: "x",
+      severity: "severe",
+      condition: {
+        metricName: "Bad Metric!",
+        aggregation: "sideways",
+        threshold: { operator: "near", value: "fast" }
+      }
+    });
+
+    await expect(validate(dto)).resolves.toHaveLength(0);
+    expect(dto.name).toBe("High latency");
+    expect(dto.condition.metricName).toBe("http_request_duration_ms");
+    expect(dto.condition.percentile).toBe(95);
+    expect(dto.condition.evaluationWindowSeconds).toBe(300);
+    expect(dto.condition.threshold.value).toBe(500);
+
+    const errors = await validate(invalidDto);
+    expect(errors.map((error) => error.property)).toEqual(
+      expect.arrayContaining(["name", "severity", "condition"])
+    );
+  });
+
+  it("parses alert includeDeleted=false as false and allows nullable update fields", async () => {
+    const listDto = plainToInstance(ListAlertsQueryDto, {
+      includeDeleted: "false",
+      page: "2",
+      pageSize: "10"
+    });
+    const updateDto = plainToInstance(UpdateAlertRuleDto, {
+      description: null,
+      mutedUntil: null
+    });
+
+    await expect(validate(listDto)).resolves.toHaveLength(0);
+    await expect(validate(updateDto)).resolves.toHaveLength(0);
+    expect(listDto.includeDeleted).toBe(false);
+    expect(listDto.page).toBe(2);
+    expect(updateDto.description).toBeNull();
   });
 });
 

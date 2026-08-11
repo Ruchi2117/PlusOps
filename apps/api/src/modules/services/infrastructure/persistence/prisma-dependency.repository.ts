@@ -1,10 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../../../../common/prisma/prisma.service";
-import type {
-  DependencyRepositoryPort,
-  ServiceDependencyRecord
-} from "../../application/ports";
+import type { DependencyRepositoryPort, ServiceDependencyRecord } from "../../application/ports";
 import type { ServiceDependency } from "../../domain";
 import {
   mapServiceDependency,
@@ -81,10 +78,7 @@ export class PrismaDependencyRepository implements DependencyRepositoryPort {
     return dependencies.map(mapServiceDependencyRecord);
   }
 
-  async wouldCreateCycle(
-    upstreamServiceId: string,
-    downstreamServiceId: string
-  ): Promise<boolean> {
+  async wouldCreateCycle(upstreamServiceId: string, downstreamServiceId: string): Promise<boolean> {
     if (upstreamServiceId === downstreamServiceId) {
       return true;
     }

@@ -55,16 +55,10 @@ export class RunHealthCheckUseCase {
       healthCheck.serviceId
     );
 
-    await assertCanRunHealthCheck(
-      command.actor,
-      service.toSnapshot(),
-      this.serviceRepository
-    );
+    await assertCanRunHealthCheck(command.actor, service.toSnapshot(), this.serviceRepository);
 
     const now = this.clock.now();
-    const previousResult = await this.healthResultRepository.findLatestByCheckId(
-      healthCheck.id
-    );
+    const previousResult = await this.healthResultRepository.findLatestByCheckId(healthCheck.id);
     const previousEvaluation = await this.healthEvaluationRepository.findLatestByService(
       healthCheck.serviceId
     );
@@ -73,15 +67,16 @@ export class RunHealthCheckUseCase {
       includeDisabled: true
     });
     const latestResults = await this.healthResultRepository.findLatestByCheckIds(
-      checks
-        .map((check) => check.id)
-        .filter((healthCheckId) => healthCheckId !== healthCheck.id)
+      checks.map((check) => check.id).filter((healthCheckId) => healthCheckId !== healthCheck.id)
     );
     const evaluation = HealthEvaluation.evaluate({
       id: randomUUID(),
       serviceId: healthCheck.serviceId,
       checks: checks.map((check) => check.toSnapshot()),
-      latestResults: [...latestResults.map((latestResult) => latestResult.toSnapshot()), result.toSnapshot()],
+      latestResults: [
+        ...latestResults.map((latestResult) => latestResult.toSnapshot()),
+        result.toSnapshot()
+      ],
       evaluatedAt: now
     });
     const timelineEvents = buildTimelineEvents({
@@ -154,10 +149,7 @@ function buildTimelineEvents(input: {
 }): HealthTimelineEvent[] {
   const events: HealthTimelineEvent[] = [];
 
-  const checkEventType = checkStatusEventType(
-    input.previousResultStatus,
-    input.nextResultStatus
-  );
+  const checkEventType = checkStatusEventType(input.previousResultStatus, input.nextResultStatus);
 
   if (checkEventType) {
     events.push(

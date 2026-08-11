@@ -89,8 +89,7 @@ export class UpdateHealthCheckDto implements UpdateHealthCheckRequest {
     nullable: true
   })
   @ValidateIf(
-    (dto: UpdateHealthCheckDto) =>
-      dto.configuration !== undefined && dto.configuration !== null
+    (dto: UpdateHealthCheckDto) => dto.configuration !== undefined && dto.configuration !== null
   )
   @IsObject()
   configuration?: Record<string, unknown> | null;

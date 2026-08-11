@@ -30,12 +30,8 @@ import {
   PermissionsGuard,
   RequirePermissions
 } from "../../../auth/presentation/http/guards/permissions.guard";
-import {
-  DeleteIncidentCommentUseCase
-} from "../../application/use-cases/delete-incident-comment.use-case";
-import {
-  UpdateIncidentCommentUseCase
-} from "../../application/use-cases/update-incident-comment.use-case";
+import { DeleteIncidentCommentUseCase } from "../../application/use-cases/delete-incident-comment.use-case";
+import { UpdateIncidentCommentUseCase } from "../../application/use-cases/update-incident-comment.use-case";
 import { UpdateIncidentCommentDto } from "./dtos/update-incident-comment.dto";
 
 @ApiTags("Incident Collaboration")

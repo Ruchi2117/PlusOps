@@ -1,10 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { HealthHistoryQuery, ServiceHealthHistoryResponse } from "@plusops/contracts";
 
-import {
-  HEALTH_EVALUATION_REPOSITORY,
-  SERVICE_REPOSITORY
-} from "../../services.tokens";
+import { HEALTH_EVALUATION_REPOSITORY, SERVICE_REPOSITORY } from "../../services.tokens";
 import { assertCanViewHealth, type HealthActor } from "../health-permissions";
 import { toServiceHealthHistoryResponse } from "../mappers/health-response.mapper";
 import type { HealthEvaluationRepositoryPort, ServiceRepositoryPort } from "../ports";
@@ -24,9 +21,7 @@ export class ListServiceHealthHistoryUseCase {
     private readonly healthEvaluationRepository: HealthEvaluationRepositoryPort
   ) {}
 
-  async execute(
-    command: ListServiceHealthHistoryCommand
-  ): Promise<ServiceHealthHistoryResponse> {
+  async execute(command: ListServiceHealthHistoryCommand): Promise<ServiceHealthHistoryResponse> {
     assertCanViewHealth(command.actor);
     await loadServiceOrThrowForHealth(this.serviceRepository, command.serviceId);
 

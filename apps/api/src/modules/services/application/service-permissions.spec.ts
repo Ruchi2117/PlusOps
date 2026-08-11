@@ -34,9 +34,9 @@ describe("Service permissions", () => {
   it("prevents developers from mutating services owned by another team", async () => {
     const repo = repository(false);
 
-    await expect(
-      assertCanUpdateService(developerActor(), serviceSnapshot(), repo)
-    ).rejects.toThrow(ForbiddenException);
+    await expect(assertCanUpdateService(developerActor(), serviceSnapshot(), repo)).rejects.toThrow(
+      ForbiddenException
+    );
   });
 
   it("allows managers to manage and archive services", async () => {

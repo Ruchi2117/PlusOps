@@ -1,5 +1,9 @@
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
-import type { ChangeIncidentStatusRequest, IncidentDetail, IncidentStatus } from "@plusops/contracts";
+import type {
+  ChangeIncidentStatusRequest,
+  IncidentDetail,
+  IncidentStatus
+} from "@plusops/contracts";
 
 import type { AuthAuditLogPort, ClockPort } from "../../../auth/application/ports";
 import { AUTH_AUDIT_LOG, AUTH_CLOCK } from "../../../auth/auth.tokens";

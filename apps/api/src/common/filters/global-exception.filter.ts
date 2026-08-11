@@ -1,9 +1,4 @@
-import {
-  Catch,
-  HttpException,
-  HttpStatus,
-  Logger
-} from "@nestjs/common";
+import { Catch, HttpException, HttpStatus, Logger } from "@nestjs/common";
 import type { ArgumentsHost, ExceptionFilter } from "@nestjs/common";
 import type { Response } from "express";
 
@@ -27,12 +22,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = context.getRequest<{ url: string }>();
 
     const isHttpException = exception instanceof HttpException;
-    const statusCode = isHttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
-    const message = isHttpException
-      ? extractMessage(exception)
-      : "An unexpected error occurred.";
+    const statusCode = isHttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    const message = isHttpException ? extractMessage(exception) : "An unexpected error occurred.";
 
     if (!isHttpException) {
       this.logger.error(exception);

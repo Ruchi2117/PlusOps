@@ -11,8 +11,5 @@ export interface HealthCheckRepositoryPort {
     healthCheckId: string,
     options?: { includeDeleted?: boolean }
   ): Promise<HealthCheck | null>;
-  listByService(
-    serviceId: string,
-    options?: HealthCheckListOptions
-  ): Promise<HealthCheck[]>;
+  listByService(serviceId: string, options?: HealthCheckListOptions): Promise<HealthCheck[]>;
 }

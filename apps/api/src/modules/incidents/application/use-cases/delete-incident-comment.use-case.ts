@@ -3,10 +3,7 @@ import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { AuthAuditLogPort, ClockPort } from "../../../auth/application/ports";
 import { AUTH_AUDIT_LOG, AUTH_CLOCK } from "../../../auth/auth.tokens";
 import { INCIDENT_TIMELINE_EVENT_TYPES } from "../../domain";
-import {
-  INCIDENT_COMMENT_REPOSITORY,
-  INCIDENT_REPOSITORY
-} from "../../incidents.tokens";
+import { INCIDENT_COMMENT_REPOSITORY, INCIDENT_REPOSITORY } from "../../incidents.tokens";
 import { assertCanDeleteIncidentComment, type IncidentActor } from "../incident-permissions";
 import type { IncidentCommentRepositoryPort, IncidentRepositoryPort } from "../ports";
 import { createWorkflowTimelineEvent, loadIncidentOrThrow } from "./incident-workflow.helpers";

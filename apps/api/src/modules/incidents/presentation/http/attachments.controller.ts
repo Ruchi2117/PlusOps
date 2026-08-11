@@ -25,9 +25,7 @@ import {
   PermissionsGuard,
   RequirePermissions
 } from "../../../auth/presentation/http/guards/permissions.guard";
-import {
-  DeleteIncidentAttachmentUseCase
-} from "../../application/use-cases/delete-incident-attachment.use-case";
+import { DeleteIncidentAttachmentUseCase } from "../../application/use-cases/delete-incident-attachment.use-case";
 
 @ApiTags("Incident Collaboration")
 @ApiBearerAuth()

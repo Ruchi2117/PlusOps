@@ -37,11 +37,16 @@ flowchart TD
   Services --> Environments["Runtime Environments"]
   Services --> Deployments["Deployment Records"]
   Services --> HealthChecks["Health Checks"]
+  Services --> Metrics["Metrics"]
+  Services --> AlertRules["Alert Rules"]
   Incidents --> Audit["Audit Log"]
   Incidents --> Services
   Monitoring --> Services
   Monitoring --> Alerts["Alerts"]
   Copilot --> ProviderAbstraction["AI Provider Abstraction"]
+  Copilot --> PromptSystem["Prompt Templates"]
+  Copilot --> ConversationStore["Conversation Context"]
+  Copilot --> UsageTracking["Usage and Audit"]
   Notifications --> SlackEmail["Slack / Email / Browser"]
 ```
 
@@ -63,7 +68,7 @@ flowchart TD
   UseCases --> Audit["Audit Log"]
 ```
 
-Services are stable ownership boundaries. Incidents, deployments, metrics, health checks, alerts, and runbooks can all attach to a service without coupling PlusOps to transient pods, containers, or hosts. Phase 1 includes service metadata, team ownership, environments, dependencies, deployment records, RBAC, soft archive, pagination, filtering, sorting, Swagger metadata, and graph cycle prevention. Phase 2 adds backend health check configuration, simulated check runs, service health evaluation, history, audit logging, and service health timeline events. It intentionally does not ingest metrics, evaluate alerts, render dashboards, or expose frontend workflows yet.
+Services are stable ownership boundaries. Incidents, deployments, metrics, health checks, alerts, and runbooks can all attach to a service without coupling PlusOps to transient pods, containers, or hosts. Phase 1 includes service metadata, team ownership, environments, dependencies, deployment records, RBAC, soft archive, pagination, filtering, sorting, Swagger metadata, and graph cycle prevention. Phase 2 adds backend health check configuration, simulated check runs, service health evaluation, history, audit logging, and service health timeline events. Phase 3 adds metric definitions, labels, series, samples, retention references, metric RBAC, audit logging, and metric timeline events. Phase 4 adds Prisma-backed query execution, alert rules, alert evaluation, alert timeline events, and alert RBAC. It intentionally does not scrape Prometheus, ingest OpenTelemetry, send notifications, create incidents automatically, render dashboards, or expose frontend workflows yet.
 
 ## Service Health Architecture
 
@@ -84,6 +89,107 @@ flowchart TD
 ```
 
 Health checks are modeled before metrics because they are operational decision signals. A liveness or readiness check tells Kubernetes and load balancers whether a process should stay alive or receive traffic. Metrics explain trends and causes later; health checks establish whether the service can currently perform its expected work.
+
+## Metrics Foundation Architecture
+
+```mermaid
+flowchart TD
+  MetricsController["Metrics Controller"] --> Guards["Access Token and Metrics Permission Guards"]
+  ServiceMetricsController["Service Metrics Controller"] --> Guards
+  Guards --> MetricUseCases["Metric Use Cases"]
+  MetricUseCases --> MetricDomain["Metric Domain Rules"]
+  MetricUseCases --> MetricPorts["Metric Repository Ports"]
+  MetricPorts --> MetricPrisma["Prisma Metric Repositories"]
+  MetricPrisma --> Postgres["PostgreSQL"]
+  MetricUseCases --> Audit["Audit Log"]
+  MetricUseCases --> Timeline["Service Metric Timeline"]
+
+  MetricDomain --> Types["Counter / Gauge / Histogram / Summary / State"]
+  MetricDomain --> Labels["Normalized Labels and Cardinality Rules"]
+  MetricDomain --> QueryRules["Time Range, Aggregation, Filter, Group-By Rules"]
+```
+
+Metrics are modeled as service-owned time-series definitions rather than provider-specific Prometheus objects. Metric definitions describe the measurement, series identify a unique label set and source, samples store timestamped values, and retention policies describe how long future storage should keep data. This keeps Prometheus and OpenTelemetry as future adapters instead of core domain dependencies.
+
+## Metrics Query and Alert Rule Architecture
+
+```mermaid
+flowchart TD
+  MetricsController["Metrics Controller"] --> QueryUseCase["Query Metrics Use Case"]
+  AlertsController["Alerts Controller"] --> AlertUseCases["Alert Use Cases"]
+  QueryUseCase --> MetricQuery["Metric Query Value Object"]
+  AlertUseCases --> AlertDomain["Alert Rule / Threshold / Evaluation Domain"]
+  AlertUseCases --> MetricQuery
+  MetricQuery --> QueryPort["Metric Query Repository Port"]
+  AlertUseCases --> AlertPorts["Alert Repository Ports"]
+  QueryPort --> PrismaMetricQuery["Prisma Metric Query Repository"]
+  AlertPorts --> PrismaAlerts["Prisma Alert Repositories"]
+  PrismaMetricQuery --> Postgres["PostgreSQL"]
+  PrismaAlerts --> Postgres
+  AlertUseCases --> Audit["Audit Log"]
+  AlertUseCases --> Timeline["Alert Timeline"]
+
+  MetricQuery --> Aggregations["Average, Min, Max, Sum, Count, Rate, Percentile, Moving Average"]
+  AlertDomain --> States["OK / Pending / Firing / Resolved / Muted"]
+```
+
+The query engine converts stored samples into operational answers through time range filters, label filters, aggregation, group-by, sorting, and pagination. Alert rules depend on the metric query port instead of Prisma directly, so a future Prometheus adapter can replace the query implementation without rewriting alert use cases or controllers.
+
+```mermaid
+flowchart LR
+  Metrics["Metrics"] --> Rules["Alert Rules"]
+  Rules --> Evaluation["Alert Evaluation"]
+  Evaluation --> Automation["Incident Automation (future)"]
+```
+
+## AI Copilot Platform Architecture
+
+```mermaid
+flowchart TD
+  AIController["AI Controller"] --> Guards["Access Token and AI Permission Guards"]
+  Guards --> AIUseCases["AI Use Cases"]
+  AIUseCases --> Pipeline["AI Request Pipeline"]
+  Pipeline --> PromptTemplates["Versioned Prompt Templates"]
+  Pipeline --> Conversations["Conversation and Message Context"]
+  Pipeline --> ProviderConfig["Provider Configuration"]
+  Pipeline --> ProviderPort["AI Provider Interface"]
+  ProviderPort --> OpenAI["Simulated OpenAI Adapter"]
+  ProviderPort --> Claude["Simulated Claude Adapter"]
+  ProviderPort --> Gemini["Simulated Gemini Adapter"]
+  ProviderPort --> Groq["Simulated Groq Adapter"]
+  Pipeline --> Usage["Usage Records"]
+  Pipeline --> AIAudit["AI Audit Events"]
+  Pipeline --> AuthAudit["Platform Audit Log"]
+  PromptTemplates --> PrismaAI["Prisma AI Repositories"]
+  Conversations --> PrismaAI
+  ProviderConfig --> PrismaAI
+  Usage --> PrismaAI
+  AIAudit --> PrismaAI
+  PrismaAI --> Postgres["PostgreSQL"]
+```
+
+The AI platform is deliberately provider-agnostic. Product use cases call the AI request pipeline and provider interface, not a vendor SDK. Today every provider adapter returns simulated responses so the architecture, RBAC, prompt rendering, conversation persistence, usage tracking, and audit logging can mature before real API keys exist. Later OpenAI, Claude, Gemini, or Groq adapters can make real calls behind the same interface without changing incident, observability, SQL, documentation, or release-note workflows.
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant Controller as AI Controller
+  participant UseCase as AI Use Case
+  participant Pipeline as AI Request Pipeline
+  participant Prompt as Prompt Template
+  participant Provider as Provider Interface
+  participant Store as Repositories
+
+  Client->>Controller: AI request
+  Controller->>UseCase: Validated DTO plus actor
+  UseCase->>Pipeline: Feature, context, variables
+  Pipeline->>Prompt: Render versioned prompt
+  Pipeline->>Provider: Generate simulated response
+  Pipeline->>Store: Conversation, usage, audit
+  Pipeline-->>Controller: Shared AI response contract
+```
+
+Current AI capabilities are chat, playground, log analysis, stack trace explanation, incident summarization, SQL generation, API documentation generation, and release note generation. Real provider API calls, streaming, RAG, embeddings, vector databases, agents, function calling, MCP, browser automation, voice, and vision are intentionally deferred.
 
 ## Incident Domain Architecture
 
@@ -186,7 +292,7 @@ Each domain module owns its persistence model and exposes behavior through appli
 - Authentication and authorization must be designed before protected features.
 - Audit logging must cover high-risk actions such as incident status changes, role changes, and service ownership changes.
 - Observability must expose health, latency, error rate, and queue metrics from the beginning.
-- AI features must use provider abstractions so OpenAI, Claude, Groq, and Gemini can be swapped per use case.
+- AI features use provider abstractions so OpenAI, Claude, Groq, and Gemini can be swapped per use case.
 - External integrations must isolate provider-specific SDKs behind ports.
 
 ## Deployment Shape

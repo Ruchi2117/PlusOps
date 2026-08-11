@@ -42,10 +42,7 @@ import {
   GetServiceHealthUseCase,
   ListServiceHealthHistoryUseCase
 } from "../../application/use-cases";
-import {
-  CreateHealthCheckDto,
-  HealthHistoryQueryDto
-} from "./dtos";
+import { CreateHealthCheckDto, HealthHistoryQueryDto } from "./dtos";
 
 @ApiTags("Service Health")
 @ApiBearerAuth()

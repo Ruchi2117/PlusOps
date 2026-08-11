@@ -1,5 +1,8 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import type { RegisterServiceDependencyRequest, ServiceDependenciesResponse } from "@plusops/contracts";
+import type {
+  RegisterServiceDependencyRequest,
+  ServiceDependenciesResponse
+} from "@plusops/contracts";
 import { randomUUID } from "node:crypto";
 
 import type { AuthAuditLogPort, ClockPort } from "../../../auth/application/ports";

@@ -9,15 +9,8 @@ import type {
   ServiceHealthResponse
 } from "@plusops/contracts";
 
-import type {
-  HealthCheck,
-  HealthCheckResult,
-  HealthEvaluation
-} from "../../domain";
-import type {
-  HealthEvaluationListQuery,
-  HealthEvaluationListResult
-} from "../ports";
+import type { HealthCheck, HealthCheckResult, HealthEvaluation } from "../../domain";
+import type { HealthEvaluationListQuery, HealthEvaluationListResult } from "../ports";
 
 export function toHealthCheck(healthCheck: HealthCheck): HealthCheckContract {
   const snapshot = healthCheck.toSnapshot();
@@ -47,9 +40,7 @@ export function toHealthCheckResponse(healthCheck: HealthCheck): HealthCheckResp
   };
 }
 
-export function toHealthCheckResult(
-  result: HealthCheckResult
-): HealthCheckResultContract {
+export function toHealthCheckResult(result: HealthCheckResult): HealthCheckResultContract {
   const snapshot = result.toSnapshot();
 
   return {
@@ -64,9 +55,7 @@ export function toHealthCheckResult(
   };
 }
 
-export function toHealthEvaluation(
-  evaluation: HealthEvaluation
-): HealthEvaluationContract {
+export function toHealthEvaluation(evaluation: HealthEvaluation): HealthEvaluationContract {
   const snapshot = evaluation.toSnapshot();
 
   return {
@@ -120,10 +109,7 @@ export function toServiceHealthHistoryResponse(
   };
 }
 
-function toPaginationMeta(
-  query: HealthEvaluationListQuery,
-  total: number
-): HealthPaginationMeta {
+function toPaginationMeta(query: HealthEvaluationListQuery, total: number): HealthPaginationMeta {
   return {
     page: query.page,
     pageSize: query.pageSize,

@@ -171,9 +171,7 @@ async function syncServiceEnvironments(
     where: {
       serviceId,
       deletedAt: null,
-      ...(nextEnvironmentIds.length > 0
-        ? { environmentId: { notIn: nextEnvironmentIds } }
-        : {})
+      ...(nextEnvironmentIds.length > 0 ? { environmentId: { notIn: nextEnvironmentIds } } : {})
     },
     data: {
       deletedAt: changedAt

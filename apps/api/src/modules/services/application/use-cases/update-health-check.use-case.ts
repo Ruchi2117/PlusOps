@@ -8,7 +8,11 @@ import { assertCanManageHealthChecks, type HealthActor } from "../health-permiss
 import { toHealthCheckResponse } from "../mappers/health-response.mapper";
 import type { HealthCheckRepositoryPort, ServiceRepositoryPort } from "../ports";
 import { rethrowHealthDomainError } from "../service-errors";
-import { assertHealthCheckReloaded, loadHealthCheckOrThrow, loadServiceOrThrowForHealth } from "./health-use-case.helpers";
+import {
+  assertHealthCheckReloaded,
+  loadHealthCheckOrThrow,
+  loadServiceOrThrowForHealth
+} from "./health-use-case.helpers";
 
 export type UpdateHealthCheckCommand = UpdateHealthCheckRequest & {
   healthCheckId: string;

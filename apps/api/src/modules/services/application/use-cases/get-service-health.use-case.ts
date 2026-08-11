@@ -51,8 +51,9 @@ export class GetServiceHealthUseCase {
     const latestResults = await this.healthResultRepository.findLatestByCheckIds(
       checks.map((check) => check.id)
     );
-    const latestPersistedEvaluation =
-      await this.healthEvaluationRepository.findLatestByService(command.serviceId);
+    const latestPersistedEvaluation = await this.healthEvaluationRepository.findLatestByService(
+      command.serviceId
+    );
     const evaluation = HealthEvaluation.evaluate({
       id: randomUUID(),
       serviceId: command.serviceId,

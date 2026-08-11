@@ -31,9 +31,7 @@ export function mapHealthCheck(prismaHealthCheck: PrismaHealthCheck): HealthChec
   return HealthCheck.restore(mapHealthCheckSnapshot(prismaHealthCheck));
 }
 
-export function mapHealthCheckSnapshot(
-  prismaHealthCheck: PrismaHealthCheck
-): HealthCheckSnapshot {
+export function mapHealthCheckSnapshot(prismaHealthCheck: PrismaHealthCheck): HealthCheckSnapshot {
   return {
     id: prismaHealthCheck.id,
     serviceId: prismaHealthCheck.serviceId,
@@ -53,9 +51,7 @@ export function mapHealthCheckSnapshot(
   };
 }
 
-export function mapHealthCheckResult(
-  prismaResult: PrismaHealthCheckResult
-): HealthCheckResult {
+export function mapHealthCheckResult(prismaResult: PrismaHealthCheckResult): HealthCheckResult {
   return HealthCheckResult.restore(mapHealthCheckResultSnapshot(prismaResult));
 }
 
@@ -154,9 +150,7 @@ export function toPrismaHealthTimelineEventCreate(
     actorUserId: snapshot.actorUserId,
     type: snapshot.type,
     message: snapshot.message,
-    fromStatus: snapshot.fromStatus
-      ? toPrismaServiceHealthStatus(snapshot.fromStatus)
-      : null,
+    fromStatus: snapshot.fromStatus ? toPrismaServiceHealthStatus(snapshot.fromStatus) : null,
     toStatus: snapshot.toStatus ? toPrismaServiceHealthStatus(snapshot.toStatus) : null,
     metadata: toNullableJson(snapshot.metadata),
     createdAt: snapshot.createdAt
@@ -179,9 +173,7 @@ export function mapHealthTimelineEventSnapshot(
     actorUserId: prismaEvent.actorUserId,
     type: mapHealthTimelineEventType(prismaEvent.type),
     message: prismaEvent.message,
-    fromStatus: prismaEvent.fromStatus
-      ? mapServiceHealthStatus(prismaEvent.fromStatus)
-      : null,
+    fromStatus: prismaEvent.fromStatus ? mapServiceHealthStatus(prismaEvent.fromStatus) : null,
     toStatus: prismaEvent.toStatus ? mapServiceHealthStatus(prismaEvent.toStatus) : null,
     metadata: toRecord(prismaEvent.metadata),
     createdAt: prismaEvent.createdAt
@@ -196,9 +188,7 @@ export function toPrismaHealthCheckType(type: HealthCheckType): PrismaHealthChec
   return type.toUpperCase() as PrismaHealthCheckType;
 }
 
-export function mapServiceHealthStatus(
-  status: PrismaServiceHealthStatus
-): ServiceHealthStatus {
+export function mapServiceHealthStatus(status: PrismaServiceHealthStatus): ServiceHealthStatus {
   return status.toLowerCase() as ServiceHealthStatus;
 }
 

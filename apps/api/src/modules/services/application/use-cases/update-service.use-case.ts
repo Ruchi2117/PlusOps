@@ -13,11 +13,7 @@ import { AUTH_AUDIT_LOG, AUTH_CLOCK } from "../../../auth/auth.tokens";
 import { ENVIRONMENT_REPOSITORY, SERVICE_REPOSITORY } from "../../services.tokens";
 import type { ServiceSnapshot } from "../../domain";
 import { rethrowServiceDomainError } from "../service-errors";
-import {
-  assertCanUpdateService,
-  hasPermission,
-  type ServiceActor
-} from "../service-permissions";
+import { assertCanUpdateService, hasPermission, type ServiceActor } from "../service-permissions";
 import { toServiceDetail } from "../mappers/service-response.mapper";
 import type { EnvironmentRepositoryPort, ServiceRepositoryPort } from "../ports";
 import { loadServiceDetailOrThrow, loadServiceOrThrow } from "./service-use-case.helpers";
@@ -88,7 +84,10 @@ export class UpdateServiceUseCase {
     return { service: toServiceDetail(detail) };
   }
 
-  private async validateReferences(command: UpdateServiceCommand, currentSlug: string): Promise<void> {
+  private async validateReferences(
+    command: UpdateServiceCommand,
+    currentSlug: string
+  ): Promise<void> {
     if (command.slug && command.slug !== currentSlug) {
       const existing = await this.serviceRepository.findBySlug(command.slug, {
         excludeServiceId: command.serviceId,
@@ -133,11 +132,10 @@ export class UpdateServiceUseCase {
   }
 }
 
-function changedFields(
-  before: ServiceSnapshot,
-  after: ServiceSnapshot
-): string[] {
+function changedFields(before: ServiceSnapshot, after: ServiceSnapshot): string[] {
   return Object.entries(after)
-    .filter(([field, value]) => field !== "updatedAt" && before[field as keyof typeof before] !== value)
+    .filter(
+      ([field, value]) => field !== "updatedAt" && before[field as keyof typeof before] !== value
+    )
     .map(([field]) => field);
 }

@@ -1,11 +1,6 @@
 import { z } from "zod";
 
-export const serviceHealthStatusValues = [
-  "healthy",
-  "degraded",
-  "unhealthy",
-  "unknown"
-] as const;
+export const serviceHealthStatusValues = ["healthy", "degraded", "unhealthy", "unknown"] as const;
 export const healthCheckTypeValues = [
   "http_endpoint",
   "tcp",

@@ -54,9 +54,7 @@ export class PrismaHealthEvaluationRepository implements HealthEvaluationReposit
     return evaluation ? mapHealthEvaluation(evaluation) : null;
   }
 
-  async listByService(
-    query: HealthEvaluationListQuery
-  ): Promise<HealthEvaluationListResult> {
+  async listByService(query: HealthEvaluationListQuery): Promise<HealthEvaluationListResult> {
     const skip = (query.page - 1) * query.pageSize;
     const where = { serviceId: query.serviceId };
     const [evaluations, total] = await this.prisma.$transaction([

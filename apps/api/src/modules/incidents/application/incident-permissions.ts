@@ -2,7 +2,11 @@ import { ForbiddenException } from "@nestjs/common";
 
 import { SYSTEM_PERMISSIONS } from "../../auth/authorization/permission-catalog";
 import type { AuthenticatedUser } from "../../auth/presentation/http/authenticated-user";
-import type { IncidentAttachmentSnapshot, IncidentCommentSnapshot, IncidentSnapshot } from "../domain";
+import type {
+  IncidentAttachmentSnapshot,
+  IncidentCommentSnapshot,
+  IncidentSnapshot
+} from "../domain";
 
 export type IncidentActor = AuthenticatedUser;
 
@@ -32,7 +36,10 @@ export function assertCanUpdateIncident(actor: IncidentActor, incident: Incident
   throw new ForbiddenException("Permission denied.");
 }
 
-export function assertCanTransitionIncident(actor: IncidentActor, incident: IncidentSnapshot): void {
+export function assertCanTransitionIncident(
+  actor: IncidentActor,
+  incident: IncidentSnapshot
+): void {
   assertCanUpdateIncident(actor, incident);
 }
 

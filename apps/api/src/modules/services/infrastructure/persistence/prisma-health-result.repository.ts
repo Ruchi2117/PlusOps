@@ -3,10 +3,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../../common/prisma/prisma.service";
 import type { HealthResultRepositoryPort } from "../../application/ports";
 import type { HealthCheckResult } from "../../domain";
-import {
-  mapHealthCheckResult,
-  toPrismaHealthResultCreate
-} from "./health-prisma.mappers";
+import { mapHealthCheckResult, toPrismaHealthResultCreate } from "./health-prisma.mappers";
 
 @Injectable()
 export class PrismaHealthResultRepository implements HealthResultRepositoryPort {

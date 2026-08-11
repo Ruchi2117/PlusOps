@@ -26,10 +26,7 @@ export class RemoveServiceDependencyUseCase {
   ) {}
 
   async execute(command: RemoveServiceDependencyCommand): Promise<void> {
-    const dependency = await loadDependencyOrThrow(
-      this.dependencyRepository,
-      command.dependencyId
-    );
+    const dependency = await loadDependencyOrThrow(this.dependencyRepository, command.dependencyId);
     const snapshot = dependency.toSnapshot();
     const upstreamService = await loadServiceOrThrow(
       this.serviceRepository,

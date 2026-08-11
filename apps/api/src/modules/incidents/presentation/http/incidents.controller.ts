@@ -46,31 +46,17 @@ import {
   RequirePermissions
 } from "../../../auth/presentation/http/guards/permissions.guard";
 import { AssignIncidentUseCase } from "../../application/use-cases/assign-incident.use-case";
-import {
-  ChangeIncidentSeverityUseCase
-} from "../../application/use-cases/change-incident-severity.use-case";
-import {
-  ChangeIncidentStatusUseCase
-} from "../../application/use-cases/change-incident-status.use-case";
+import { ChangeIncidentSeverityUseCase } from "../../application/use-cases/change-incident-severity.use-case";
+import { ChangeIncidentStatusUseCase } from "../../application/use-cases/change-incident-status.use-case";
 import { CloseIncidentUseCase } from "../../application/use-cases/close-incident.use-case";
-import {
-  CreateIncidentAttachmentUseCase
-} from "../../application/use-cases/create-incident-attachment.use-case";
-import {
-  CreateIncidentCommentUseCase
-} from "../../application/use-cases/create-incident-comment.use-case";
+import { CreateIncidentAttachmentUseCase } from "../../application/use-cases/create-incident-attachment.use-case";
+import { CreateIncidentCommentUseCase } from "../../application/use-cases/create-incident-comment.use-case";
 import { CreateIncidentUseCase } from "../../application/use-cases/create-incident.use-case";
 import { DeleteIncidentUseCase } from "../../application/use-cases/delete-incident.use-case";
 import { GetIncidentUseCase } from "../../application/use-cases/get-incident.use-case";
-import {
-  ListIncidentAttachmentsUseCase
-} from "../../application/use-cases/list-incident-attachments.use-case";
-import {
-  ListIncidentCommentsUseCase
-} from "../../application/use-cases/list-incident-comments.use-case";
-import {
-  ListIncidentTimelineUseCase
-} from "../../application/use-cases/list-incident-timeline.use-case";
+import { ListIncidentAttachmentsUseCase } from "../../application/use-cases/list-incident-attachments.use-case";
+import { ListIncidentCommentsUseCase } from "../../application/use-cases/list-incident-comments.use-case";
+import { ListIncidentTimelineUseCase } from "../../application/use-cases/list-incident-timeline.use-case";
 import { ListIncidentsUseCase } from "../../application/use-cases/list-incidents.use-case";
 import { ReopenIncidentUseCase } from "../../application/use-cases/reopen-incident.use-case";
 import { ResolveIncidentUseCase } from "../../application/use-cases/resolve-incident.use-case";

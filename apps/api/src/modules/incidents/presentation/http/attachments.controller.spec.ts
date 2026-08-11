@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { AuthenticatedUser } from "../../../auth/presentation/http/authenticated-user";
-import type {
-  DeleteIncidentAttachmentUseCase
-} from "../../application/use-cases/delete-incident-attachment.use-case";
+import type { DeleteIncidentAttachmentUseCase } from "../../application/use-cases/delete-incident-attachment.use-case";
 import { AttachmentsController } from "./attachments.controller";
 
 describe("AttachmentsController", () => {

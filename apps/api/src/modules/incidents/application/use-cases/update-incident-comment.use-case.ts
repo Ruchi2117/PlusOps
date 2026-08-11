@@ -1,4 +1,9 @@
-import { Inject, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException
+} from "@nestjs/common";
 import type { IncidentCommentResponse, UpdateIncidentCommentRequest } from "@plusops/contracts";
 
 import type { AuthAuditLogPort, ClockPort } from "../../../auth/application/ports";

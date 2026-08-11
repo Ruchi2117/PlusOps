@@ -169,21 +169,19 @@ export function mapServiceDetail(prismaService: PrismaServiceDetail): ServiceDet
     ),
     upstreamDependencies: prismaService.upstreamDependencies.map(mapServiceDependencyRecord),
     downstreamDependencies: prismaService.downstreamDependencies.map(mapServiceDependencyRecord),
-    deployments: prismaService.deployments.map(
-      (deployment): ServiceDeploymentRecord => ({
-        id: deployment.id,
-        serviceId: deployment.serviceId,
-        environmentId: deployment.environmentId,
-        environmentName: deployment.environment.name,
-        version: deployment.version,
-        commitSha: deployment.commitSha,
-        repositoryUrl: deployment.repositoryUrl,
-        status: mapDeploymentStatus(deployment.status),
-        deployedByUserId: deployment.deployedByUserId,
-        startedAt: deployment.startedAt,
-        finishedAt: deployment.finishedAt
-      })
-    )
+    deployments: prismaService.deployments.map((deployment): ServiceDeploymentRecord => ({
+      id: deployment.id,
+      serviceId: deployment.serviceId,
+      environmentId: deployment.environmentId,
+      environmentName: deployment.environment.name,
+      version: deployment.version,
+      commitSha: deployment.commitSha,
+      repositoryUrl: deployment.repositoryUrl,
+      status: mapDeploymentStatus(deployment.status),
+      deployedByUserId: deployment.deployedByUserId,
+      startedAt: deployment.startedAt,
+      finishedAt: deployment.finishedAt
+    }))
   };
 }
 
@@ -207,9 +205,7 @@ export function mapServiceSnapshot(prismaService: PrismaService): ServiceSnapsho
   };
 }
 
-export function mapServiceDependency(
-  prismaDependency: PrismaServiceDependency
-): ServiceDependency {
+export function mapServiceDependency(prismaDependency: PrismaServiceDependency): ServiceDependency {
   return ServiceDependency.restore(mapServiceDependencySnapshot(prismaDependency));
 }
 
@@ -290,9 +286,7 @@ export function mapServiceVisibility(visibility: PrismaServiceVisibility): Servi
   return visibility.toLowerCase() as ServiceVisibility;
 }
 
-export function toPrismaServiceVisibility(
-  visibility: ServiceVisibility
-): PrismaServiceVisibility {
+export function toPrismaServiceVisibility(visibility: ServiceVisibility): PrismaServiceVisibility {
   return visibility.toUpperCase() as PrismaServiceVisibility;
 }
 

@@ -92,11 +92,7 @@ export class RefreshSessionUseCase {
 
     if (isRefreshTokenRotated(currentRefreshToken)) {
       if (session) {
-        await this.sessionRepository.revokeSession(
-          session.id,
-          now,
-          "refresh_token_reuse_detected"
-        );
+        await this.sessionRepository.revokeSession(session.id, now, "refresh_token_reuse_detected");
       }
 
       await this.auditLog.record({
@@ -174,7 +170,11 @@ export class RefreshSessionUseCase {
     });
 
     if (!rotatedRefreshToken) {
-      await this.sessionRepository.revokeSession(session.id, now, "refresh_token_rotation_conflict");
+      await this.sessionRepository.revokeSession(
+        session.id,
+        now,
+        "refresh_token_rotation_conflict"
+      );
       await this.auditLog.record({
         actorUserId: user.id,
         action: "auth.refresh_reuse_detected",

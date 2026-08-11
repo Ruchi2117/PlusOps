@@ -1,10 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { IncidentTimelineResponse } from "@plusops/contracts";
 
-import {
-  INCIDENT_REPOSITORY,
-  INCIDENT_TIMELINE_REPOSITORY
-} from "../../incidents.tokens";
+import { INCIDENT_REPOSITORY, INCIDENT_TIMELINE_REPOSITORY } from "../../incidents.tokens";
 import { assertCanReadIncidents, type IncidentActor } from "../incident-permissions";
 import {
   toIncidentTimelineEvent,

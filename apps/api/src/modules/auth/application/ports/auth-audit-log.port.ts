@@ -34,7 +34,21 @@ export type AuthAuditAction =
   | "health_check.created"
   | "health_check.updated"
   | "health_check.deleted"
-  | "health_check.run";
+  | "health_check.run"
+  | "metric.created"
+  | "metric.updated"
+  | "metric.archived"
+  | "metric.sample_recorded"
+  | "metric.query_executed"
+  | "alert.created"
+  | "alert.updated"
+  | "alert.archived"
+  | "alert.evaluated"
+  | "alert.resolved"
+  | "ai.request_succeeded"
+  | "ai.request_failed"
+  | "ai.provider_updated"
+  | "ai.prompt_rendered";
 
 export type RecordAuthAuditEventInput = {
   actorUserId: string | null;
@@ -50,7 +64,16 @@ export type RecordAuthAuditEventInput = {
     | "Service"
     | "ServiceDependency"
     | "HealthCheck"
-    | "ServiceHealthEvaluation";
+    | "ServiceHealthEvaluation"
+    | "MetricDefinition"
+    | "MetricSample"
+    | "AlertRule"
+    | "AlertEvaluation"
+    | "AIRequest"
+    | "AIProviderConfiguration"
+    | "PromptTemplate"
+    | "Conversation"
+    | "UsageRecord";
   entityId: string;
   metadata?: Record<string, unknown>;
 };

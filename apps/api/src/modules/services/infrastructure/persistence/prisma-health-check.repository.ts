@@ -1,15 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../../../../common/prisma/prisma.service";
-import type {
-  HealthCheckListOptions,
-  HealthCheckRepositoryPort
-} from "../../application/ports";
+import type { HealthCheckListOptions, HealthCheckRepositoryPort } from "../../application/ports";
 import type { HealthCheck } from "../../domain";
-import {
-  mapHealthCheck,
-  toPrismaHealthCheckWrite
-} from "./health-prisma.mappers";
+import { mapHealthCheck, toPrismaHealthCheckWrite } from "./health-prisma.mappers";
 
 @Injectable()
 export class PrismaHealthCheckRepository implements HealthCheckRepositoryPort {

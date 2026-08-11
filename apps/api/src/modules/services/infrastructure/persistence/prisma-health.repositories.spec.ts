@@ -69,22 +69,14 @@ describe("Prisma health repositories", () => {
     ]);
     const repository = new PrismaHealthResultRepository(prisma as unknown as PrismaService);
 
-    const results = await repository.findLatestByCheckIds([
-      healthCheckId(),
-      secondHealthCheckId()
-    ]);
+    const results = await repository.findLatestByCheckIds([healthCheckId(), secondHealthCheckId()]);
 
-    expect(results.map((result) => result.toSnapshot().id)).toEqual([
-      resultId(),
-      secondResultId()
-    ]);
+    expect(results.map((result) => result.toSnapshot().id)).toEqual([resultId(), secondResultId()]);
   });
 
   it("persists health result, evaluation, and timeline events in one transaction", async () => {
     const prisma = createPrismaMock();
-    const repository = new PrismaHealthEvaluationRepository(
-      prisma as unknown as PrismaService
-    );
+    const repository = new PrismaHealthEvaluationRepository(prisma as unknown as PrismaService);
 
     await repository.save(evaluation(), {
       result: healthResult(),

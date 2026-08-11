@@ -7,9 +7,9 @@ AI-powered internal developer platform and incident management system for engine
 
 PlusOps is a production-minded SaaS project built incrementally to demonstrate modern full-stack engineering practices. The long-term product vision is to help engineering teams manage incidents, understand service health, inspect APIs, collaborate during operational events, and use AI assistance to improve developer productivity.
 
-This repository is under active development. The current stable release is **v0.6.0: Service Catalog Foundation**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
+This repository is under active development. The current stable release is **v0.8.0: Metrics Foundation**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
 
-Current work is focused on **Milestone 4: Observability and Monitoring**, with the released Service Catalog foundation now acting as the backbone for health checks, future metrics, deployments, and dependency views.
+Current work is focused on **Milestone 5: AI Copilot Platform**, building a provider-agnostic AI subsystem that future incident, observability, API documentation, and release workflows can use without coupling product logic to one LLM vendor.
 
 ## Project Status
 
@@ -21,10 +21,12 @@ Current work is focused on **Milestone 4: Observability and Monitoring**, with t
 - [x] `v0.4.0` - Incident Workflow Engine
 - [x] `v0.5.0` - Incident Collaboration Layer
 - [x] `v0.6.0` - Service Catalog Foundation
+- [x] `v0.7.0` - Service Health Checks
+- [x] `v0.8.0` - Metrics Foundation
 
 ### Current Focus
 
-- Milestone 4 Phase 2 - Service Health Checks backend
+- Milestone 5 - AI Copilot Platform backend
 
 ### Milestone 3 Progress
 
@@ -40,13 +42,14 @@ Current work is focused on **Milestone 4: Observability and Monitoring**, with t
 - [x] Phase 0 - Observability and monitoring concepts
 - [x] Phase 1 - Service catalog and domain model
 - [x] Phase 2 - Service health checks backend
-- [ ] Phase 3 - Metrics ingestion
+- [x] Phase 3 - Metrics Foundation backend
+- [x] Phase 4 - Metrics Query Engine and Alert Rules backend
 
 ## Latest Release
 
-**Current Stable Release:** `v0.6.0 - Service Catalog Foundation`
+**Current Stable Release:** `v0.8.0 - Metrics Foundation`
 
-The current released backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, and the Service Catalog foundation for ownership metadata, environments, dependencies, deployment records, RBAC, audit evidence, and future service health workflows. The latest unreleased Milestone 4 work adds backend service health checks and simulated health evaluation.
+The current released backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, the Service Catalog foundation, backend service health checks, and the Metrics Foundation. The latest unreleased Milestone 4 work adds the Metrics Query Engine and Alert Rules backend.
 
 ## Releases
 
@@ -58,7 +61,9 @@ The current released backend includes production-oriented authentication, incide
 | `v0.4.0` | Released | Incident workflow engine, assignment, severity changes, status transitions, resolve, reopen, close |
 | `v0.5.0` | Released | Collaboration layer, comments, mentions, attachment metadata, read-only activity timeline |
 | `v0.6.0` | Released | Service catalog foundation, ownership metadata, environments, dependencies, deployments schema |
-| Unreleased | In progress | Service health checks, health evaluation, health history, simulated check runs |
+| `v0.7.0` | Released | Service health checks, health evaluation, health history, simulated check runs |
+| `v0.8.0` | Released | Metrics foundation, metric definitions, labels, series, samples, retention references |
+| Unreleased | Implemented locally | Metrics query engine, alert rules, AI provider abstraction, simulated AI copilots |
 
 ## Why PlusOps Exists
 
@@ -93,6 +98,13 @@ Suggested first screenshot:
 - Service health checks backend: HTTP, TCP, synthetic, dependency, database, and cache check definitions
 - Service health evaluation with healthy, degraded, unhealthy, and unknown states
 - Simulated health check runs, health history, RBAC, audit logging, and timeline events
+- Metrics Foundation backend: metric definitions, retention policy references, labels, series, samples, and provider-neutral query boundaries
+- Metric types: counter, gauge, histogram, summary, and state
+- Cardinality-aware label validation and metric RBAC for view, submit, and manage actions
+- Metrics Query Engine backend: time range filters, label filters, aggregation, group-by, sorting, pagination, rate, percentile, and moving average support
+- Alert Rules backend: threshold conditions, alert severity and state model, simulated metric-backed evaluation, timeline events, RBAC, audit logging, and soft archive
+- AI Copilot Platform backend: provider abstraction, simulated OpenAI/Claude/Gemini/Groq adapters, prompt templates, conversations, usage tracking, and AI audit events
+- AI copilots for chat, log analysis, stack trace explanation, incident summarization, SQL generation, API documentation, release notes, and playground experimentation
 - Incident DTO validation, pagination, filtering, sorting, and Swagger metadata
 - Clean Architecture module boundaries
 - Shared TypeScript/Zod contracts
@@ -101,8 +113,7 @@ Suggested first screenshot:
 
 ### In Progress
 
-- Metrics ingestion
-- Service-centric monitoring design
+- Milestone 5 release validation and documentation polish
 
 ### Planned
 
@@ -111,9 +122,9 @@ Suggested first screenshot:
 - OAuth and MFA
 - Notifications and realtime collaboration
 - API operations workflows
-- Monitoring ingestion
+- Prometheus and OpenTelemetry ingestion
 - Alerting and notification delivery
-- AI copilot provider integrations
+- Real LLM provider integrations
 - Production deployment hardening
 
 ## Authentication Highlights
@@ -207,6 +218,66 @@ Prisma Health Repositories
    |
    v
 PostgreSQL
+```
+
+Metrics use the same service-centric observability boundary:
+
+```text
+Metrics Controller
+   |
+   v
+Metric Use Cases
+   |
+   v
+Metric Domain Rules
+   |
+   v
+Metric Repository Ports
+   |
+   v
+Prisma Metric Repositories
+   |
+   v
+PostgreSQL
+```
+
+Metric alerts compose on top of the query boundary:
+
+```text
+Metrics Query Engine
+   |
+   v
+Alert Rule Use Cases
+   |
+   v
+Alert Evaluation Domain
+   |
+   v
+Alert Repository Ports
+   |
+   v
+Prisma Alert Repositories
+   |
+   v
+PostgreSQL
+```
+
+AI uses a provider-agnostic platform boundary:
+
+```text
+AI Controller
+   |
+   v
+AI Use Cases
+   |
+   v
+AI Request Pipeline
+   |
+   v
+Provider Interface
+   |
+   v
+Simulated OpenAI / Claude / Gemini / Groq Adapters
 ```
 
 The API follows Clean Architecture boundaries inside feature modules:
@@ -326,7 +397,7 @@ pnpm test
 pnpm build
 ```
 
-Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog and service health domain, permission, use-case, controller, DTO validation, repository, soft-delete, dependency graph, health evaluation, timeline generation, and RBAC tests. Broader integration and end-to-end coverage will grow as the frontend arrives.
+Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog, service health, metrics foundation, metric query engine, and alert rule tests for domain rules, permissions, use cases, controllers, DTO validation, repositories, soft delete, dependency graph, health evaluation, timeline generation, cardinality validation, aggregation, alert threshold logic, alert state transitions, and RBAC. Milestone 5 adds AI platform tests for provider abstraction, prompt rendering, conversation persistence, usage tracking, AI audit logging, RBAC, DTO validation, controllers, and repositories. Broader integration and end-to-end coverage will grow as the frontend arrives.
 
 ## Documentation
 
@@ -334,6 +405,7 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 - [Milestone 2: Authentication and Authorization](./docs/milestones/02-authentication-authorization.md)
 - [Milestone 3: Incident Management Core](./docs/milestones/03-incident-management-core.md)
 - [Milestone 4: Observability and Monitoring](./docs/milestones/04-observability-monitoring.md)
+- [Milestone 5: AI Copilot Platform](./docs/milestones/05-ai-copilot-platform.md)
 - [Architecture Overview](./docs/architecture/overview.md)
 - [ER Diagram](./docs/architecture/er-diagram.md)
 - [Security Baseline](./docs/architecture/security-baseline.md)
@@ -358,7 +430,10 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 [done] Incident Management Core
    |
    v
-[current] Observability and Monitoring
+[done] Observability and Monitoring
+   |
+   v
+[current] AI Copilot Platform
    |
    v
 API Operations
@@ -376,10 +451,10 @@ Deployment Hardening
 1. Milestone 1: Architecture Foundation - released
 2. Milestone 2: Authentication Backend - released
 3. Milestone 3: Incident Management Core - released through `v0.5.0`
-4. Milestone 4: Observability and Monitoring - released through `v0.6.0`, Phase 2 health checks implemented locally
-5. Milestone 5: API Operations
-6. Milestone 6: Notifications and Collaboration
-7. Milestone 7: AI Copilot Provider Abstraction
+4. Milestone 4: Observability and Monitoring - released through `v0.8.0`, Phase 4 query engine and alert rules implemented locally
+5. Milestone 5: AI Copilot Platform - implemented locally with simulated providers
+6. Milestone 6: API Operations
+7. Milestone 7: Notifications and Collaboration
 8. Milestone 8: Deployment Hardening
 9. Milestone 9: Testing and Performance Optimization
 10. Milestone 10: Production Release Readiness

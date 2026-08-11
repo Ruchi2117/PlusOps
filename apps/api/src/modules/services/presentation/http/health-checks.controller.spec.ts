@@ -17,11 +17,7 @@ describe("HealthChecksController", () => {
       runHealthCheckUseCase
     } = createController();
 
-    await controller.update(
-      healthCheckId(),
-      { description: null, isEnabled: false },
-      actor()
-    );
+    await controller.update(healthCheckId(), { description: null, isEnabled: false }, actor());
     await controller.delete(healthCheckId(), actor());
     await controller.run(
       healthCheckId(),

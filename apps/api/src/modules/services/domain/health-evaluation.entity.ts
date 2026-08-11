@@ -89,8 +89,12 @@ export class HealthEvaluation {
         stale
       };
     });
-    const criticalChecks = evaluatedChecks.filter((evaluatedCheck) => evaluatedCheck.check.isCritical);
-    const optionalChecks = evaluatedChecks.filter((evaluatedCheck) => !evaluatedCheck.check.isCritical);
+    const criticalChecks = evaluatedChecks.filter(
+      (evaluatedCheck) => evaluatedCheck.check.isCritical
+    );
+    const optionalChecks = evaluatedChecks.filter(
+      (evaluatedCheck) => !evaluatedCheck.check.isCritical
+    );
 
     if (criticalChecks.some((evaluatedCheck) => evaluatedCheck.status === "unhealthy")) {
       return evaluated(input, "unhealthy", "A critical health check is failing.");

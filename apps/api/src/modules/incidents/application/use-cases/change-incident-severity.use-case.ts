@@ -6,10 +6,7 @@ import { AUTH_AUDIT_LOG, AUTH_CLOCK } from "../../../auth/auth.tokens";
 import { INCIDENT_TIMELINE_EVENT_TYPES } from "../../domain";
 import { INCIDENT_REPOSITORY } from "../../incidents.tokens";
 import { rethrowIncidentDomainError } from "../incident-errors";
-import {
-  assertCanManageIncidentWorkflow,
-  type IncidentActor
-} from "../incident-permissions";
+import { assertCanManageIncidentWorkflow, type IncidentActor } from "../incident-permissions";
 import { toIncidentDetail } from "../mappers/incident-response.mapper";
 import type { IncidentRepositoryPort } from "../ports";
 import {

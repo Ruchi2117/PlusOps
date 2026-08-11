@@ -53,6 +53,8 @@ function validateSnapshot(snapshot: HealthTimelineEventSnapshot): void {
   }
 
   if (snapshot.message.length < 1 || snapshot.message.length > 1000) {
-    throw new HealthDomainError("Health timeline event message must be between 1 and 1000 characters.");
+    throw new HealthDomainError(
+      "Health timeline event message must be between 1 and 1000 characters."
+    );
   }
 }

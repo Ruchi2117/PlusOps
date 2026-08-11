@@ -1,10 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../../../../common/prisma/prisma.service";
-import type {
-  IncidentMentionRepositoryPort,
-  MentionableUserRecord
-} from "../../application/ports";
+import type { IncidentMentionRepositoryPort, MentionableUserRecord } from "../../application/ports";
 
 @Injectable()
 export class PrismaIncidentMentionRepository implements IncidentMentionRepositoryPort {

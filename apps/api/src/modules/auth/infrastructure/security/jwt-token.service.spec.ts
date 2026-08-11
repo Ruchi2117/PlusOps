@@ -37,8 +37,12 @@ describe("JwtTokenService", () => {
 
     expect(result.rawToken).not.toBe(result.tokenHash);
     await expect(tokenService.hashToken(result.rawToken)).resolves.toBe(result.tokenHash);
-    await expect(tokenService.verifyTokenHash(result.rawToken, result.tokenHash)).resolves.toBe(true);
-    await expect(tokenService.verifyTokenHash("wrong-token", result.tokenHash)).resolves.toBe(false);
+    await expect(tokenService.verifyTokenHash(result.rawToken, result.tokenHash)).resolves.toBe(
+      true
+    );
+    await expect(tokenService.verifyTokenHash("wrong-token", result.tokenHash)).resolves.toBe(
+      false
+    );
     expect(result.expiresAt.toISOString()).toBe("2026-08-12T00:00:00.000Z");
   });
 

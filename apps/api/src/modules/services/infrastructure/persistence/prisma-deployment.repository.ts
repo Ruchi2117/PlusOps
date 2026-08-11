@@ -1,10 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 
 import { PrismaService } from "../../../../common/prisma/prisma.service";
-import type {
-  DeploymentRepositoryPort,
-  ServiceDeploymentRecord
-} from "../../application/ports";
+import type { DeploymentRepositoryPort, ServiceDeploymentRecord } from "../../application/ports";
 import { mapDeploymentStatus } from "./service-prisma.mappers";
 
 @Injectable()
@@ -14,10 +11,7 @@ export class PrismaDeploymentRepository implements DeploymentRepositoryPort {
     private readonly prisma: PrismaService
   ) {}
 
-  async listRecentByService(
-    serviceId: string,
-    limit: number
-  ): Promise<ServiceDeploymentRecord[]> {
+  async listRecentByService(serviceId: string, limit: number): Promise<ServiceDeploymentRecord[]> {
     const deployments = await this.prisma.deployment.findMany({
       where: {
         serviceId

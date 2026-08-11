@@ -18,9 +18,7 @@ describe("health permissions", () => {
 
   it("allows engineering managers to manage checks", () => {
     expect(() => assertCanManageHealthChecks(actor(["health:manage"]))).not.toThrow();
-    expect(() => assertCanManageHealthChecks(actor(["health:run"]))).toThrow(
-      ForbiddenException
-    );
+    expect(() => assertCanManageHealthChecks(actor(["health:run"]))).toThrow(ForbiddenException);
   });
 
   it("allows developers to run checks only for services owned by their team", async () => {

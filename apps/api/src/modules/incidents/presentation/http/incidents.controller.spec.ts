@@ -2,31 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { AuthenticatedUser } from "../../../auth/presentation/http/authenticated-user";
 import type { AssignIncidentUseCase } from "../../application/use-cases/assign-incident.use-case";
-import type {
-  ChangeIncidentSeverityUseCase
-} from "../../application/use-cases/change-incident-severity.use-case";
-import type {
-  ChangeIncidentStatusUseCase
-} from "../../application/use-cases/change-incident-status.use-case";
+import type { ChangeIncidentSeverityUseCase } from "../../application/use-cases/change-incident-severity.use-case";
+import type { ChangeIncidentStatusUseCase } from "../../application/use-cases/change-incident-status.use-case";
 import type { CloseIncidentUseCase } from "../../application/use-cases/close-incident.use-case";
-import type {
-  CreateIncidentAttachmentUseCase
-} from "../../application/use-cases/create-incident-attachment.use-case";
-import type {
-  CreateIncidentCommentUseCase
-} from "../../application/use-cases/create-incident-comment.use-case";
+import type { CreateIncidentAttachmentUseCase } from "../../application/use-cases/create-incident-attachment.use-case";
+import type { CreateIncidentCommentUseCase } from "../../application/use-cases/create-incident-comment.use-case";
 import type { CreateIncidentUseCase } from "../../application/use-cases/create-incident.use-case";
 import type { DeleteIncidentUseCase } from "../../application/use-cases/delete-incident.use-case";
 import type { GetIncidentUseCase } from "../../application/use-cases/get-incident.use-case";
-import type {
-  ListIncidentAttachmentsUseCase
-} from "../../application/use-cases/list-incident-attachments.use-case";
-import type {
-  ListIncidentCommentsUseCase
-} from "../../application/use-cases/list-incident-comments.use-case";
-import type {
-  ListIncidentTimelineUseCase
-} from "../../application/use-cases/list-incident-timeline.use-case";
+import type { ListIncidentAttachmentsUseCase } from "../../application/use-cases/list-incident-attachments.use-case";
+import type { ListIncidentCommentsUseCase } from "../../application/use-cases/list-incident-comments.use-case";
+import type { ListIncidentTimelineUseCase } from "../../application/use-cases/list-incident-timeline.use-case";
 import type { ListIncidentsUseCase } from "../../application/use-cases/list-incidents.use-case";
 import type { ReopenIncidentUseCase } from "../../application/use-cases/reopen-incident.use-case";
 import type { ResolveIncidentUseCase } from "../../application/use-cases/resolve-incident.use-case";

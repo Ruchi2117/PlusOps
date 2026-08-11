@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PrismaService } from "../../../../common/prisma/prisma.service";
-import { IncidentAttachment, IncidentComment, IncidentMention, IncidentTimelineEvent } from "../../domain";
+import {
+  IncidentAttachment,
+  IncidentComment,
+  IncidentMention,
+  IncidentTimelineEvent
+} from "../../domain";
 import { PrismaIncidentAttachmentRepository } from "./prisma-incident-attachment.repository";
 import { PrismaIncidentCommentRepository } from "./prisma-incident-comment.repository";
 import { PrismaIncidentMentionRepository } from "./prisma-incident-mention.repository";
@@ -146,9 +151,7 @@ function createPrismaMock() {
       count: vi.fn(async () => 0)
     },
     user: {
-      findMany: vi.fn(
-        async (): Promise<Array<{ id: string; name: string; email: string }>> => []
-      )
+      findMany: vi.fn(async (): Promise<Array<{ id: string; name: string; email: string }>> => [])
     },
     $transaction: vi.fn(async (operation: unknown) => {
       if (Array.isArray(operation)) {

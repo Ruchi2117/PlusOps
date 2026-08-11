@@ -124,24 +124,22 @@ const commentInclude = {
   }
 } as const;
 
-function mapCommentRecord(
-  comment: {
+function mapCommentRecord(comment: {
+  id: string;
+  incidentId: string;
+  authorId: string;
+  body: string;
+  editedAt: Date | null;
+  createdAt: Date;
+  deletedAt: Date | null;
+  author: { name: string };
+  mentions: Array<{
     id: string;
-    incidentId: string;
-    authorId: string;
-    body: string;
-    editedAt: Date | null;
-    createdAt: Date;
-    deletedAt: Date | null;
-    author: { name: string };
-    mentions: Array<{
-      id: string;
-      mentionedUserId: string;
-      handle: string;
-      mentionedUser: { name: string };
-    }>;
-  }
-): IncidentCommentCollaborationRecord {
+    mentionedUserId: string;
+    handle: string;
+    mentionedUser: { name: string };
+  }>;
+}): IncidentCommentCollaborationRecord {
   return {
     comment: IncidentComment.restore({
       id: comment.id,

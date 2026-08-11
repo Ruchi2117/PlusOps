@@ -1,12 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { AuthenticatedUser } from "../../../auth/presentation/http/authenticated-user";
-import type {
-  DeleteIncidentCommentUseCase
-} from "../../application/use-cases/delete-incident-comment.use-case";
-import type {
-  UpdateIncidentCommentUseCase
-} from "../../application/use-cases/update-incident-comment.use-case";
+import type { DeleteIncidentCommentUseCase } from "../../application/use-cases/delete-incident-comment.use-case";
+import type { UpdateIncidentCommentUseCase } from "../../application/use-cases/update-incident-comment.use-case";
 import { CommentsController } from "./comments.controller";
 
 describe("CommentsController", () => {

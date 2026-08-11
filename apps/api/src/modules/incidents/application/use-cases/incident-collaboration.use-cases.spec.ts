@@ -322,12 +322,10 @@ class FakeCommentRepository implements IncidentCommentRepositoryPort {
 
   findById = vi.fn(async () => this.comment);
 
-  listByIncident = vi.fn(
-    async (): Promise<IncidentCommentListResult> => ({
-      comments: this.comment ? [this.comment] : [],
-      total: this.comment ? 1 : 0
-    })
-  );
+  listByIncident = vi.fn(async (): Promise<IncidentCommentListResult> => ({
+    comments: this.comment ? [this.comment] : [],
+    total: this.comment ? 1 : 0
+  }));
 }
 
 class FakeMentionRepository implements IncidentMentionRepositoryPort {
@@ -365,12 +363,10 @@ class FakeAttachmentRepository implements IncidentAttachmentRepositoryPort {
 
   findById = vi.fn(async () => this.attachment);
 
-  listByIncident = vi.fn(
-    async (): Promise<IncidentAttachmentListResult> => ({
-      attachments: this.attachment ? [this.attachment] : [],
-      total: this.attachment ? 1 : 0
-    })
-  );
+  listByIncident = vi.fn(async (): Promise<IncidentAttachmentListResult> => ({
+    attachments: this.attachment ? [this.attachment] : [],
+    total: this.attachment ? 1 : 0
+  }));
 }
 
 class FakeTimelineRepository implements IncidentTimelineRepositoryPort {
@@ -380,12 +376,10 @@ class FakeTimelineRepository implements IncidentTimelineRepositoryPort {
     this.events.push(event);
   });
 
-  listByIncident = vi.fn(
-    async (): Promise<IncidentTimelineListResult> => ({
-      events: this.events,
-      total: this.events.length
-    })
-  );
+  listByIncident = vi.fn(async (): Promise<IncidentTimelineListResult> => ({
+    events: this.events,
+    total: this.events.length
+  }));
 }
 
 class FakeAttachmentStorage implements IncidentAttachmentStoragePort {

@@ -75,6 +75,88 @@ enum HealthCheckType {
   CACHE
 }
 
+enum MetricType {
+  COUNTER
+  GAUGE
+  HISTOGRAM
+  SUMMARY
+  STATE
+}
+
+enum MetricUnit {
+  MILLISECONDS
+  SECONDS
+  BYTES
+  PERCENT
+  COUNT
+  REQUESTS
+  ERRORS
+  CUSTOM
+}
+
+enum MetricAggregation {
+  AVERAGE
+  MINIMUM
+  MAXIMUM
+  SUM
+  COUNT
+  RATE
+  PERCENTILE
+  MOVING_AVERAGE
+}
+
+enum AlertSeverity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+enum AlertState {
+  OK
+  PENDING
+  FIRING
+  RESOLVED
+  MUTED
+}
+
+enum AlertOperator {
+  GREATER_THAN
+  LESS_THAN
+  EQUALS
+  NOT_EQUALS
+  BETWEEN
+  OUTSIDE_RANGE
+}
+
+enum AIProviderType {
+  OPENAI
+  CLAUDE
+  GEMINI
+  GROQ
+}
+
+enum AIFeature {
+  CHAT
+  PLAYGROUND
+  LOG_ANALYSIS
+  STACKTRACE_EXPLANATION
+  INCIDENT_SUMMARIZATION
+  SQL_GENERATION
+  API_DOCUMENTATION
+  RELEASE_NOTES
+}
+
+enum AIMessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+}
+
+enum AIRequestStatus {
+  SUCCEEDED
+  FAILED
+}
+
 model User {
   id                      String                       @id @default(uuid())
   email                   String                       @unique
@@ -101,6 +183,11 @@ model User {
   serviceDependencies     ServiceDependency[]          @relation("ServiceDependencyCreator")
   serviceDeployments      Deployment[]                 @relation("DeploymentActor")
   serviceHealthEvents     ServiceHealthTimelineEvent[] @relation("ServiceHealthTimelineActor")
+  serviceMetricEvents     ServiceMetricTimelineEvent[] @relation("ServiceMetricTimelineActor")
+  alertTimelineEvents     AlertTimelineEvent[]         @relation("AlertTimelineActor")
+  aiConversations         AIConversation[]             @relation("AIConversationActor")
+  aiPromptTemplates       PromptTemplate[]             @relation("PromptTemplateCreator")
+  aiAuditEvents           AIAuditEvent[]               @relation("AIAuditActor")
   auditLogs               AuditLog[]
 
   @@index([emailVerifiedAt])
@@ -287,6 +374,11 @@ model Service {
   healthResults          HealthCheckResult[]
   healthEvaluations      ServiceHealthEvaluation[]
   healthTimelineEvents   ServiceHealthTimelineEvent[]
+  metricDefinitions      MetricDefinition[]
+  metricSeries           MetricSeries[]
+  metricSamples          MetricSample[]
+  metricTimelineEvents   ServiceMetricTimelineEvent[]
+  alertRules             AlertRule[]
 
   @@index([ownerTeamId])
   @@index([lifecycleStatus])
@@ -440,6 +532,302 @@ model ServiceHealthTimelineEvent {
   @@index([healthCheckId])
   @@index([actorUserId])
   @@index([type])
+}
+
+model MetricRetentionPolicy {
+  id                String             @id @default(uuid())
+  name              String             @unique
+  retentionDays     Int
+  resolutionSeconds Int
+  isDefault         Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  definitions       MetricDefinition[]
+  samples           MetricSample[]
+
+  @@index([isDefault])
+}
+
+model MetricDefinition {
+  id                 String                       @id @default(uuid())
+  serviceId          String
+  name               String
+  displayName        String
+  description        String?
+  type               MetricType
+  unit               MetricUnit
+  customUnit         String?
+  defaultAggregation MetricAggregation
+  retentionPolicyId  String?
+  isEnabled          Boolean                      @default(true)
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  deletedAt          DateTime?
+  service            Service                      @relation(fields: [serviceId], references: [id])
+  retentionPolicy    MetricRetentionPolicy?       @relation(fields: [retentionPolicyId], references: [id])
+  series             MetricSeries[]
+  samples            MetricSample[]
+  timelineEvents     ServiceMetricTimelineEvent[]
+  alertRules         AlertRule[]
+
+  @@unique([serviceId, name])
+  @@index([serviceId])
+  @@index([type])
+  @@index([unit])
+  @@index([retentionPolicyId])
+  @@index([deletedAt])
+}
+
+model MetricSeries {
+  id                 String           @id @default(uuid())
+  metricDefinitionId String
+  serviceId          String
+  labelHash          String
+  labels             Json
+  source             String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  lastSampleAt       DateTime?
+  metricDefinition   MetricDefinition @relation(fields: [metricDefinitionId], references: [id])
+  service            Service          @relation(fields: [serviceId], references: [id])
+  samples            MetricSample[]
+
+  @@unique([metricDefinitionId, labelHash, source])
+  @@index([serviceId])
+  @@index([metricDefinitionId])
+  @@index([lastSampleAt])
+}
+
+model MetricSample {
+  id                 String                 @id @default(uuid())
+  metricDefinitionId String
+  metricSeriesId     String
+  serviceId          String
+  timestamp          DateTime
+  value              Float
+  labels             Json
+  source             String
+  retentionPolicyId  String?
+  createdAt          DateTime               @default(now())
+  metricDefinition   MetricDefinition       @relation(fields: [metricDefinitionId], references: [id])
+  metricSeries       MetricSeries           @relation(fields: [metricSeriesId], references: [id])
+  service            Service                @relation(fields: [serviceId], references: [id])
+  retentionPolicy    MetricRetentionPolicy? @relation(fields: [retentionPolicyId], references: [id])
+
+  @@index([metricDefinitionId, timestamp])
+  @@index([metricSeriesId, timestamp])
+  @@index([serviceId, timestamp])
+  @@index([retentionPolicyId])
+}
+
+model ServiceMetricTimelineEvent {
+  id                 String            @id @default(uuid())
+  serviceId          String
+  metricDefinitionId String?
+  actorUserId        String?
+  type               String
+  message            String
+  fromValue          String?
+  toValue            String?
+  metadata           Json?
+  createdAt          DateTime          @default(now())
+  service            Service           @relation(fields: [serviceId], references: [id])
+  metricDefinition   MetricDefinition? @relation(fields: [metricDefinitionId], references: [id])
+  actor              User?             @relation("ServiceMetricTimelineActor", fields: [actorUserId], references: [id])
+
+  @@index([serviceId, createdAt])
+  @@index([metricDefinitionId])
+  @@index([actorUserId])
+  @@index([type])
+}
+
+model AlertRule {
+  id                      String               @id @default(uuid())
+  name                    String
+  description             String?
+  severity                AlertSeverity
+  state                   AlertState           @default(OK)
+  metricName              String?
+  metricDefinitionId      String?
+  serviceId               String?
+  filters                 Json
+  aggregation             MetricAggregation
+  percentile              Float?
+  evaluationWindowSeconds Int                  @default(3600)
+  operator                AlertOperator
+  thresholdValue          Float?
+  thresholdMin            Float?
+  thresholdMax            Float?
+  isEnabled               Boolean              @default(true)
+  mutedUntil              DateTime?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  deletedAt               DateTime?
+  metricDefinition        MetricDefinition?    @relation(fields: [metricDefinitionId], references: [id])
+  service                 Service?             @relation(fields: [serviceId], references: [id])
+  evaluations             AlertEvaluation[]
+  timelineEvents          AlertTimelineEvent[]
+
+  @@index([state])
+  @@index([severity])
+  @@index([serviceId])
+  @@index([metricDefinitionId])
+  @@index([deletedAt])
+}
+
+model AlertEvaluation {
+  id               String      @id @default(uuid())
+  alertRuleId      String
+  previousState    AlertState?
+  state            AlertState
+  observedValue    Float?
+  thresholdSummary String
+  message          String
+  evaluatedAt      DateTime
+  createdAt        DateTime    @default(now())
+  alertRule        AlertRule   @relation(fields: [alertRuleId], references: [id])
+
+  @@index([alertRuleId, evaluatedAt])
+  @@index([state])
+}
+
+model AlertTimelineEvent {
+  id          String      @id @default(uuid())
+  alertRuleId String
+  actorUserId String?
+  type        String
+  message     String
+  fromState   AlertState?
+  toState     AlertState?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  alertRule   AlertRule   @relation(fields: [alertRuleId], references: [id])
+  actor       User?       @relation("AlertTimelineActor", fields: [actorUserId], references: [id])
+
+  @@index([alertRuleId, createdAt])
+  @@index([actorUserId])
+  @@index([type])
+}
+
+model ProviderConfiguration {
+  id                    String           @id @default(uuid())
+  provider              AIProviderType   @unique
+  displayName           String
+  model                 String
+  isEnabled             Boolean          @default(true)
+  priority              Int              @default(10)
+  maxTokens             Int              @default(4096)
+  temperature           Float            @default(0.2)
+  costPer1KInputTokens  Float            @default(0)
+  costPer1KOutputTokens Float            @default(0)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  conversations         AIConversation[]
+  usageRecords          AIUsageRecord[]
+
+  @@index([isEnabled, priority])
+}
+
+model PromptTemplate {
+  id              String    @id @default(uuid())
+  key             String
+  version         Int
+  name            String
+  description     String?
+  feature         AIFeature
+  systemPrompt    String
+  userPrompt      String
+  variables       Json
+  isActive        Boolean   @default(true)
+  createdByUserId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy       User?     @relation("PromptTemplateCreator", fields: [createdByUserId], references: [id])
+
+  @@unique([key, version])
+  @@index([key, isActive])
+  @@index([feature, isActive])
+  @@index([createdByUserId])
+}
+
+model AIConversation {
+  id               String                  @id @default(uuid())
+  title            String
+  feature          AIFeature
+  provider         AIProviderType
+  model            String
+  providerConfigId String?
+  actorUserId      String
+  context          Json
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  deletedAt        DateTime?
+  actor            User                    @relation("AIConversationActor", fields: [actorUserId], references: [id])
+  providerConfig   ProviderConfiguration?  @relation(fields: [providerConfigId], references: [id])
+  messages         AIConversationMessage[]
+  usageRecords     AIUsageRecord[]
+
+  @@index([actorUserId, createdAt])
+  @@index([feature, createdAt])
+  @@index([provider])
+  @@index([deletedAt])
+}
+
+model AIConversationMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  role           AIMessageRole
+  content        String
+  metadata       Json?
+  tokenCount     Int            @default(0)
+  createdAt      DateTime       @default(now())
+  conversation   AIConversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@index([role])
+}
+
+model AIUsageRecord {
+  id                    String                 @id @default(uuid())
+  provider              AIProviderType
+  model                 String
+  feature               AIFeature
+  providerConfigId      String?
+  conversationId        String?
+  conversationMessageId String?
+  promptTokens          Int
+  completionTokens      Int
+  totalTokens           Int
+  latencyMs             Int
+  estimatedCostUsd      Float
+  status                AIRequestStatus
+  errorMessage          String?
+  createdAt             DateTime               @default(now())
+  providerConfig        ProviderConfiguration? @relation(fields: [providerConfigId], references: [id])
+  conversation          AIConversation?        @relation(fields: [conversationId], references: [id])
+
+  @@index([provider, createdAt])
+  @@index([feature, createdAt])
+  @@index([conversationId])
+  @@index([status])
+}
+
+model AIAuditEvent {
+  id          String          @id @default(uuid())
+  actorUserId String?
+  action      String
+  feature     AIFeature
+  provider    AIProviderType?
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+  actor       User?           @relation("AIAuditActor", fields: [actorUserId], references: [id])
+
+  @@index([actorUserId, createdAt])
+  @@index([feature, createdAt])
+  @@index([provider])
+  @@index([action])
 }
 
 model Incident {
