@@ -12,6 +12,7 @@ import { ServicesModule } from "./modules/services/services.module";
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [".env", "../../.env", "apps/api/.env"],
       validate: validateEnvironment
     }),
     AuthModule,

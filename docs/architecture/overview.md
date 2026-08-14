@@ -50,6 +50,48 @@ flowchart TD
   Notifications --> SlackEmail["Slack / Email / Browser"]
 ```
 
+## Frontend Product Architecture
+
+```mermaid
+flowchart TD
+  Shell["App Shell"] --> Router["Lazy React Router Routes"]
+  Router --> Dashboard["Dashboard"]
+  Router --> IncidentsUI["Incident UI"]
+  Router --> ServicesUI["Service Catalog UI"]
+  Router --> ObservabilityUI["Health / Metrics / Alerts UI"]
+  Router --> AIUI["AI Copilot UI"]
+  Router --> WorkspaceUI["Profile / Settings / Notifications"]
+
+  Dashboard --> Query["TanStack Query"]
+  IncidentsUI --> Query
+  ServicesUI --> Query
+  ObservabilityUI --> Query
+  AIUI --> Query
+  Query --> APIClient["Token-aware API Client"]
+  APIClient --> API["NestJS API"]
+  Query --> DemoData["Typed Beta Demo Fallback"]
+
+  Shell --> UIState["Zustand UI State"]
+  UIState --> CommandPalette["Command Palette"]
+  UIState --> NotificationDrawer["Notification Drawer"]
+  UIState --> Theme["Dark Mode"]
+```
+
+The frontend keeps server state in TanStack Query and local interaction state in Zustand. This avoids copying API responses into a global client store while still allowing UI concerns such as the command palette, notification drawer, selected records, and theme to remain fast and local.
+
+The API client attaches the current JWT access token when available and attempts a refresh once on unauthorized responses. Read workflows use typed beta demo fallbacks when a local backend is unavailable or unseeded, which keeps the product inspectable without weakening the real backend integration path.
+
+The React app is route-split by product area:
+
+- Dashboard
+- Incident list and incident detail
+- Service catalog and service detail
+- Health, metrics, and alert surfaces
+- AI Copilot workspace
+- Profile, settings, and notifications
+
+The UI favors dense operational layouts over marketing screens: tables, filters, status badges, charts, timeline records, drawers, command navigation, loading skeletons, empty states, and error states.
+
 ## Service Catalog Architecture
 
 Milestone 4 starts observability from the service boundary instead of from raw infrastructure resources.

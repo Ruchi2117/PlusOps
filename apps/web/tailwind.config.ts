@@ -22,7 +22,8 @@ const config = {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       boxShadow: {
-        panel: "0 1px 2px rgb(15 23 42 / 0.08)"
+        panel: "0 18px 60px rgb(0 0 0 / 0.28)",
+        glow: "0 0 0 1px rgb(49 230 168 / 0.12), 0 18px 80px rgb(49 230 168 / 0.12)"
       }
     }
   },
@@ -30,4 +31,3 @@ const config = {
 } satisfies Config;
 
 export default config;
-

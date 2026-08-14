@@ -7,9 +7,9 @@ AI-powered internal developer platform and incident management system for engine
 
 PlusOps is a production-minded SaaS project built incrementally to demonstrate modern full-stack engineering practices. The long-term product vision is to help engineering teams manage incidents, understand service health, inspect APIs, collaborate during operational events, and use AI assistance to improve developer productivity.
 
-This repository is under active development. The current stable release is **v0.8.0: Metrics Foundation**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
+This repository is under active development. The current stable release is **v1.0.0-beta.1: AI Copilot Platform and Observability Query Engine**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
 
-Current work is focused on **Milestone 5: AI Copilot Platform**, building a provider-agnostic AI subsystem that future incident, observability, API documentation, and release workflows can use without coupling product logic to one LLM vendor.
+Current work is focused on **Milestone 6: Frontend Product Beta**, turning the backend platform into a polished internal engineering SaaS experience.
 
 ## Project Status
 
@@ -23,10 +23,11 @@ Current work is focused on **Milestone 5: AI Copilot Platform**, building a prov
 - [x] `v0.6.0` - Service Catalog Foundation
 - [x] `v0.7.0` - Service Health Checks
 - [x] `v0.8.0` - Metrics Foundation
+- [x] `v1.0.0-beta.1` - AI Copilot Platform and Observability Query Engine
 
 ### Current Focus
 
-- Milestone 5 - AI Copilot Platform backend
+- Milestone 6 - Frontend Product Beta
 
 ### Milestone 3 Progress
 
@@ -47,9 +48,9 @@ Current work is focused on **Milestone 5: AI Copilot Platform**, building a prov
 
 ## Latest Release
 
-**Current Stable Release:** `v0.8.0 - Metrics Foundation`
+**Current Stable Release:** `v1.0.0-beta.1 - AI Copilot Platform and Observability Query Engine`
 
-The current released backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, the Service Catalog foundation, backend service health checks, and the Metrics Foundation. The latest unreleased Milestone 4 work adds the Metrics Query Engine and Alert Rules backend.
+The current released backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, the Service Catalog foundation, service health checks, metrics, metric querying, alert rules, and a provider-agnostic AI Copilot Platform with simulated providers.
 
 ## Releases
 
@@ -63,7 +64,8 @@ The current released backend includes production-oriented authentication, incide
 | `v0.6.0` | Released | Service catalog foundation, ownership metadata, environments, dependencies, deployments schema |
 | `v0.7.0` | Released | Service health checks, health evaluation, health history, simulated check runs |
 | `v0.8.0` | Released | Metrics foundation, metric definitions, labels, series, samples, retention references |
-| Unreleased | Implemented locally | Metrics query engine, alert rules, AI provider abstraction, simulated AI copilots |
+| `v1.0.0-beta.1` | Released | Metrics query engine, alert rules, AI provider abstraction, simulated AI copilots |
+| Unreleased | Implemented locally | Frontend product beta with dashboard, incidents, services, health, metrics, alerts, AI, profile, settings, and notifications UI |
 
 ## Why PlusOps Exists
 
@@ -73,9 +75,12 @@ Engineering teams often switch between incident tools, dashboards, API documenta
 
 Screenshots will be added as the UI stabilizes.
 
-Suggested first screenshot:
+Suggested screenshots:
 
-- Operations dashboard with service health, API latency, and recent incidents
+- Operations dashboard with service health, alerts, activity, and AI suggestions
+- Incident detail with timeline, comments, attachments, and workflow actions
+- Service detail with dependencies, health checks, metrics, and deployments
+- AI Copilot workspace with chat, provider selection, copilots, and playground
 
 ## Current Features
 
@@ -105,6 +110,13 @@ Suggested first screenshot:
 - Alert Rules backend: threshold conditions, alert severity and state model, simulated metric-backed evaluation, timeline events, RBAC, audit logging, and soft archive
 - AI Copilot Platform backend: provider abstraction, simulated OpenAI/Claude/Gemini/Groq adapters, prompt templates, conversations, usage tracking, and AI audit events
 - AI copilots for chat, log analysis, stack trace explanation, incident summarization, SQL generation, API documentation, release notes, and playground experimentation
+- Frontend product shell with responsive navigation, command palette, notification drawer, dark mode, error boundaries, loading skeletons, toast notifications, and typed API integration
+- Dashboard UI backed by platform APIs with active incidents, critical alerts, service posture, metric trend cards, recent activity, AI suggestions, and recent deployments
+- Incident Management UI with list filters, pagination, detail view, timeline, comments, attachment metadata, and workflow controls
+- Service Catalog UI with service list, service detail, dependencies, health summary, metrics summary, and deployment context
+- Observability UI for health checks, health history, metric querying with Recharts, alert rules, and simulated alert evaluation
+- AI Copilot UI with chat, conversation history, provider selector, usage statistics, playground, and engineering copilots
+- Profile, settings, and notification center surfaces
 - Incident DTO validation, pagination, filtering, sorting, and Swagger metadata
 - Clean Architecture module boundaries
 - Shared TypeScript/Zod contracts
@@ -113,14 +125,14 @@ Suggested first screenshot:
 
 ### In Progress
 
-- Milestone 5 release validation and documentation polish
+- Milestone 6 frontend release validation and documentation polish
 
 ### Planned
 
-- Frontend authentication screens
+- Full frontend authentication screens
 - Email verification and password reset flows
 - OAuth and MFA
-- Notifications and realtime collaboration
+- Realtime notification delivery
 - API operations workflows
 - Prometheus and OpenTelemetry ingestion
 - Alerting and notification delivery
@@ -182,6 +194,9 @@ PlusOps uses a TypeScript monorepo so the frontend, backend, and shared API cont
 
 ```text
 React Web App
+   |
+   v
+TanStack Query + API Client
    |
    v
 NestJS API
@@ -291,8 +306,10 @@ The frontend uses a feature-based structure:
 
 - `app`: routing, providers, and shell layout
 - `components`: reusable UI primitives
-- `features`: product areas such as dashboard and incidents
-- `lib`: shared frontend utilities
+- `features`: product areas such as dashboard, incidents, services, observability, AI, and workspace settings
+- `lib`: shared frontend utilities, API/session state, UI state, and typed demo data
+
+The frontend keeps server state in TanStack Query and UI state in Zustand. Read screens call the real backend in live mode. Typed beta demo data is available only through the explicit local development mode `VITE_PLUSOPS_DATA_MODE=demo`; API failures are surfaced instead of silently replaced.
 
 Shared contracts live in `packages/contracts` and use Zod plus TypeScript types to reduce drift between API responses and frontend consumers.
 
@@ -337,6 +354,31 @@ Build shared contracts:
 pnpm contracts:build
 ```
 
+Start local infrastructure and apply migrations:
+
+```bash
+pnpm infra:up
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+```
+
+For a one-command development bootstrap, run:
+
+```bash
+pnpm dev:setup
+```
+
+Seeded demo accounts all use the local-only password `PlusOpsDev123!`.
+
+| Email | Role |
+| --- | --- |
+| `admin@plusops.local` | Admin |
+| `manager@plusops.local` | Engineering Manager |
+| `developer@plusops.local` | Developer |
+| `qa@plusops.local` | QA Engineer |
+| `viewer@plusops.local` | Viewer |
+
 ## Local Development
 
 Start the API:
@@ -377,6 +419,30 @@ View infrastructure logs:
 pnpm infra:logs
 ```
 
+Prisma migration workflow:
+
+```bash
+pnpm db:validate
+pnpm db:migrate:create
+pnpm db:migrate
+pnpm db:deploy
+pnpm db:seed
+```
+
+Use `db:migrate` during local development and `db:deploy` in production-like environments. Seed data is handled separately from migrations and can be rerun safely to refresh the deterministic demo story.
+
+## Data Modes
+
+The default frontend mode is live API mode. In this mode PlusOps calls the NestJS API through the Vite `/api` proxy and shows loading, empty, and error states when the backend is unavailable.
+
+For UI-only inspection without a running backend, set:
+
+```bash
+VITE_PLUSOPS_DATA_MODE=demo
+```
+
+Demo mode is explicit and local-development only. It should not be used to hide API, auth, migration, or seed failures during release validation.
+
 ## Available URLs
 
 - Web app: http://localhost:5173
@@ -397,7 +463,7 @@ pnpm test
 pnpm build
 ```
 
-Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog, service health, metrics foundation, metric query engine, and alert rule tests for domain rules, permissions, use cases, controllers, DTO validation, repositories, soft delete, dependency graph, health evaluation, timeline generation, cardinality validation, aggregation, alert threshold logic, alert state transitions, and RBAC. Milestone 5 adds AI platform tests for provider abstraction, prompt rendering, conversation persistence, usage tracking, AI audit logging, RBAC, DTO validation, controllers, and repositories. Broader integration and end-to-end coverage will grow as the frontend arrives.
+Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog, service health, metrics foundation, metric query engine, and alert rule tests for domain rules, permissions, use cases, controllers, DTO validation, repositories, soft delete, dependency graph, health evaluation, timeline generation, cardinality validation, aggregation, alert threshold logic, alert state transitions, and RBAC. Milestone 5 adds AI platform tests for provider abstraction, prompt rendering, conversation persistence, usage tracking, AI audit logging, RBAC, DTO validation, controllers, and repositories. Milestone 6 adds frontend tests for UI components, query-key boundaries, Zustand UI state, and typed beta demo data.
 
 ## Documentation
 
@@ -406,8 +472,10 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 - [Milestone 3: Incident Management Core](./docs/milestones/03-incident-management-core.md)
 - [Milestone 4: Observability and Monitoring](./docs/milestones/04-observability-monitoring.md)
 - [Milestone 5: AI Copilot Platform](./docs/milestones/05-ai-copilot-platform.md)
+- [Milestone 6: Frontend Product Beta](./docs/milestones/06-frontend-product-beta.md)
 - [Architecture Overview](./docs/architecture/overview.md)
 - [ER Diagram](./docs/architecture/er-diagram.md)
+- [Developer Guide](./docs/developer-guide.md)
 - [Security Baseline](./docs/architecture/security-baseline.md)
 - [ADR 0001: TypeScript Monorepo](./docs/architecture/adr/0001-use-typescript-monorepo.md)
 - [ADR 0002: NestJS API](./docs/architecture/adr/0002-use-nestjs-for-api.md)
@@ -433,16 +501,16 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 [done] Observability and Monitoring
    |
    v
-[current] AI Copilot Platform
+[done] AI Copilot Platform
+   |
+   v
+[current] Frontend Product Beta
    |
    v
 API Operations
    |
    v
-Notifications and Collaboration
-   |
-   v
-AI Copilot
+Realtime Notifications
    |
    v
 Deployment Hardening
@@ -451,12 +519,12 @@ Deployment Hardening
 1. Milestone 1: Architecture Foundation - released
 2. Milestone 2: Authentication Backend - released
 3. Milestone 3: Incident Management Core - released through `v0.5.0`
-4. Milestone 4: Observability and Monitoring - released through `v0.8.0`, Phase 4 query engine and alert rules implemented locally
-5. Milestone 5: AI Copilot Platform - implemented locally with simulated providers
-6. Milestone 6: API Operations
-7. Milestone 7: Notifications and Collaboration
-8. Milestone 8: Deployment Hardening
-9. Milestone 9: Testing and Performance Optimization
+4. Milestone 4: Observability and Monitoring - released through `v1.0.0-beta.1`
+5. Milestone 5: AI Copilot Platform - released in `v1.0.0-beta.1`
+6. Milestone 6: Frontend Product Beta - implemented locally
+7. Milestone 7: API Operations
+8. Milestone 8: Realtime Notifications
+9. Milestone 9: Deployment Hardening
 10. Milestone 10: Production Release Readiness
 
 ## Contributing

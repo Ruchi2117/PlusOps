@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { metricAggregationSchema, metricLabelSchema, metricPaginationMetaSchema } from "./metrics";
+import { metricAggregationSchema, metricLabelSchema, metricPaginationMetaSchema } from "./metrics.js";
 
 export const alertSeverityValues = ["critical", "warning", "info"] as const;
 export const alertStateValues = ["ok", "pending", "firing", "resolved", "muted"] as const;

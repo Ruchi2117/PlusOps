@@ -3,6 +3,8 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { Toaster } from "react-hot-toast";
 
+import { ErrorBoundary } from "../../components/error-boundary";
+
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -19,7 +21,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <ErrorBoundary>{children}</ErrorBoundary>
       <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
     </QueryClientProvider>
   );

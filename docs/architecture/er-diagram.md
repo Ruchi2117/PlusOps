@@ -1,5 +1,7 @@
 # PlusOps Initial ER Diagram
 
+Milestone 6 is a frontend product milestone and does not introduce new persistence models. The ER diagram remains the backend beta data model released through `v1.0.0-beta.1`.
+
 ```mermaid
 erDiagram
   USER ||--o{ TEAM_MEMBER : joins
