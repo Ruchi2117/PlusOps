@@ -9,10 +9,14 @@ const LoginPage = lazy(() =>
   import("../features/auth/login-page").then((module) => ({ default: module.LoginPage }))
 );
 const DashboardPage = lazy(() =>
-  import("../features/dashboard/dashboard-page").then((module) => ({ default: module.DashboardPage }))
+  import("../features/dashboard/dashboard-page").then((module) => ({
+    default: module.DashboardPage
+  }))
 );
 const IncidentsPage = lazy(() =>
-  import("../features/incidents/incidents-page").then((module) => ({ default: module.IncidentsPage }))
+  import("../features/incidents/incidents-page").then((module) => ({
+    default: module.IncidentsPage
+  }))
 );
 const IncidentDetailPage = lazy(() =>
   import("../features/incidents/incident-detail-page").then((module) => ({
@@ -31,7 +35,9 @@ const HealthPage = lazy(() =>
   import("../features/observability/health-page").then((module) => ({ default: module.HealthPage }))
 );
 const MetricsPage = lazy(() =>
-  import("../features/observability/metrics-page").then((module) => ({ default: module.MetricsPage }))
+  import("../features/observability/metrics-page").then((module) => ({
+    default: module.MetricsPage
+  }))
 );
 const AlertsPage = lazy(() =>
   import("../features/observability/alerts-page").then((module) => ({ default: module.AlertsPage }))
@@ -48,6 +54,11 @@ const SettingsPage = lazy(() =>
 const NotificationsPage = lazy(() =>
   import("../features/workspace/notifications-page").then((module) => ({
     default: module.NotificationsPage
+  }))
+);
+const VisualFoundationPage = lazy(() =>
+  import("../features/foundation/visual-foundation-page").then((module) => ({
+    default: module.VisualFoundationPage
   }))
 );
 
@@ -127,6 +138,10 @@ export const router = createBrowserRouter([
       {
         path: "notifications",
         element: withSuspense(<NotificationsPage />)
+      },
+      {
+        path: "_dev/visual-foundation",
+        element: withSuspense(<VisualFoundationPage />)
       }
     ]
   }

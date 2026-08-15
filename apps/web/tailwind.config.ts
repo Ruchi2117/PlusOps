@@ -21,9 +21,19 @@ const config = {
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       },
+      borderRadius: {
+        ops: "var(--ops-radius-sm)",
+        "ops-md": "var(--ops-radius-md)",
+        "ops-lg": "var(--ops-radius-lg)"
+      },
       boxShadow: {
-        panel: "0 18px 60px rgb(0 0 0 / 0.28)",
-        glow: "0 0 0 1px rgb(49 230 168 / 0.12), 0 18px 80px rgb(49 230 168 / 0.12)"
+        panel: "var(--ops-shadow-panel)",
+        scene: "var(--ops-shadow-scene)",
+        glow: "var(--ops-shadow-glow)"
+      },
+      transitionTimingFunction: {
+        ops: "var(--ops-ease-standard)",
+        "ops-emphasis": "var(--ops-ease-emphasis)"
       }
     }
   },
