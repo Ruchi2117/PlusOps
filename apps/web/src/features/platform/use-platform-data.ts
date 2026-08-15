@@ -111,11 +111,19 @@ export function useDashboardData() {
           sortDirection: "asc"
         })
       ]);
-      const health = await Promise.all(
-        services.data.slice(0, 6).map((service) => getServiceHealth(service.id))
+      const [health, dependencyResponses] = await Promise.all([
+        Promise.all(services.data.slice(0, 6).map((service) => getServiceHealth(service.id))),
+        Promise.all(services.data.slice(0, 6).map((service) => listServiceDependencies(service.id)))
+      ]);
+      const dependencies = Array.from(
+        new Map(
+          dependencyResponses
+            .flatMap((response) => response.data)
+            .map((dependency) => [dependency.id, dependency])
+        ).values()
       );
 
-      return { incidents, services, metrics, alerts, providers, metricQuery, health };
+      return { incidents, services, metrics, alerts, providers, metricQuery, health, dependencies };
     }
   });
 }
@@ -149,7 +157,9 @@ export function useIncidentMutations(incidentId: string) {
   const invalidate = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.incident(incidentId) }),
-      queryClient.invalidateQueries({ queryKey: platformQueryKeys.incidentAttachments(incidentId) }),
+      queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.incidentAttachments(incidentId)
+      }),
       queryClient.invalidateQueries({ queryKey: ["incidents"] }),
       queryClient.invalidateQueries({ queryKey: platformQueryKeys.dashboard })
     ]);
@@ -205,14 +215,29 @@ export function useServiceTopology() {
   return useQuery({
     queryKey: platformQueryKeys.serviceTopology,
     queryFn: async () => {
-      const services = await listServices({ pageSize: 100 });
-      const dependencies = await Promise.all(
-        services.data.map((service) => listServiceDependencies(service.id))
+      const [services, incidents, alerts] = await Promise.all([
+        listServices({ pageSize: 100 }),
+        listIncidents({ pageSize: 100 }),
+        listAlerts({ pageSize: 100 })
+      ]);
+      const [dependencyResponses, health] = await Promise.all([
+        Promise.all(services.data.map((service) => listServiceDependencies(service.id))),
+        Promise.all(services.data.map((service) => getServiceHealth(service.id)))
+      ]);
+      const dependencies = Array.from(
+        new Map(
+          dependencyResponses
+            .flatMap((response) => response.data)
+            .map((dependency) => [dependency.id, dependency])
+        ).values()
       );
 
       return {
         services,
-        dependencies: dependencies.flatMap((response) => response.data)
+        dependencies,
+        health,
+        incidents,
+        alerts
       };
     }
   });
@@ -220,7 +245,10 @@ export function useServiceTopology() {
 
 export function useServiceHealthSummaries(services: ServiceSummary[]) {
   return useQuery({
-    queryKey: [...platformQueryKeys.serviceHealthSummaries, services.map((service) => service.id)] as const,
+    queryKey: [
+      ...platformQueryKeys.serviceHealthSummaries,
+      services.map((service) => service.id)
+    ] as const,
     queryFn: async () => Promise.all(services.map((service) => getServiceHealth(service.id))),
     enabled: services.length > 0
   });
@@ -310,7 +338,9 @@ export function useRunHealthCheck(serviceId: string) {
       toast.success("Health check executed");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: platformQueryKeys.serviceHealth(serviceId) }),
-        queryClient.invalidateQueries({ queryKey: platformQueryKeys.serviceHealthHistory(serviceId) })
+        queryClient.invalidateQueries({
+          queryKey: platformQueryKeys.serviceHealthHistory(serviceId)
+        })
       ]);
     },
     onError: (error) => toast.error(getApiErrorMessage(error))
