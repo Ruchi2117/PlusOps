@@ -1,17 +1,18 @@
 import type { IncidentPriority, IncidentSeverity, IncidentStatus } from "@plusops/contracts";
-import { Filter, Plus, Search } from "lucide-react";
+import { ArrowRight, Filter, Plus, Search } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 
+import { MotionReveal } from "../../components/spatial";
 import { Button } from "../../components/ui/button";
 import { EmptyState, ErrorState, RetryButton } from "../../components/ui/data-state";
 import { FieldLabel, Input, Select } from "../../components/ui/form-controls";
-import { ScrollReveal } from "../../components/ui/scroll-reveal";
 import { IncidentSeverityBadge, IncidentStatusBadge, PriorityBadge } from "../../components/ui/status-badge";
 import { Skeleton } from "../../components/ui/skeleton";
-import { formatDateTime } from "../../lib/format";
-import { useIncidents } from "../platform/use-platform-data";
+import { formatDateTime, formatNumber, titleCase } from "../../lib/format";
+import { useIncident, useIncidents, useServices } from "../platform/use-platform-data";
+import { IncidentResponseField } from "./incident-response-field";
 
 const statuses: Array<IncidentStatus | "all"> = [
   "all",
@@ -32,225 +33,339 @@ export function IncidentsPage() {
   const [status, setStatus] = useState<IncidentStatus | "all">("all");
   const [severity, setSeverity] = useState<IncidentSeverity | "all">("all");
   const [priority, setPriority] = useState<IncidentPriority | "all">("all");
+  const [serviceId, setServiceId] = useState("all");
+  const [assigneeId, setAssigneeId] = useState("all");
   const [page, setPage] = useState(1);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
 
   const query = useMemo(
     () => ({
+      assigneeId: assigneeId === "all" ? undefined : assigneeId,
       page,
       pageSize: 10,
-      search: search.trim() || undefined,
-      status: status === "all" ? undefined : status,
-      severity: severity === "all" ? undefined : severity,
       priority: priority === "all" ? undefined : priority,
+      search: search.trim() || undefined,
+      serviceId: serviceId === "all" ? undefined : serviceId,
+      severity: severity === "all" ? undefined : severity,
       sortBy: "updatedAt" as const,
-      sortDirection: "desc" as const
+      sortDirection: "desc" as const,
+      status: status === "all" ? undefined : status
     }),
-    [page, priority, search, severity, status]
+    [assigneeId, page, priority, search, serviceId, severity, status]
   );
-
+  const filterOptionsQuery = useIncidents({
+    page: 1,
+    pageSize: 100,
+    sortBy: "updatedAt",
+    sortDirection: "desc"
+  });
   const incidentsQuery = useIncidents(query);
+  const servicesQuery = useServices();
   const incidents = incidentsQuery.data?.data ?? [];
   const pagination = incidentsQuery.data?.pagination;
-  const sev1Count = incidents.filter((incident) => incident.severity === "sev1").length;
-  const openCount = incidents.filter((incident) => !["resolved", "closed"].includes(incident.status)).length;
+  const selectedIncident = selectedIncidentId
+    ? incidents.find((incident) => incident.id === selectedIncidentId)
+    : undefined;
+  const incidentDetailQuery = useIncident(selectedIncident?.id ?? "");
+  const serviceOptions = useMemo(() => {
+    const services = servicesQuery.data?.data ?? [];
+
+    if (services.length) {
+      return services.map((service) => ({ id: service.id, name: service.name }));
+    }
+
+    return Array.from(
+      new Map(
+        (filterOptionsQuery.data?.data ?? incidents).map((incident) => [
+          incident.serviceId,
+          { id: incident.serviceId, name: incident.serviceName }
+        ])
+      ).values()
+    ).sort((left, right) => left.name.localeCompare(right.name));
+  }, [filterOptionsQuery.data?.data, incidents, servicesQuery.data?.data]);
+  const assigneeOptions = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          (filterOptionsQuery.data?.data ?? incidents)
+            .filter((incident) => incident.assigneeId && incident.assigneeName)
+            .map((incident) => [
+              incident.assigneeId!,
+              { id: incident.assigneeId!, name: incident.assigneeName! }
+            ])
+        ).values()
+      ).sort((left, right) => left.name.localeCompare(right.name)),
+    [filterOptionsQuery.data?.data, incidents]
+  );
+
+  useEffect(() => {
+    if (
+      incidentsQuery.data &&
+      selectedIncidentId &&
+      !incidents.some((incident) => incident.id === selectedIncidentId)
+    ) {
+      setSelectedIncidentId(null);
+    }
+  }, [incidents, incidentsQuery.data, selectedIncidentId]);
+
+  const resetPage = () => setPage(1);
 
   return (
-    <div className="art-page space-y-12">
-      <section className="grid min-h-[26rem] gap-10 border-b border-white/[0.08] pb-10 xl:grid-cols-[1.1fr_0.9fr]">
-        <ScrollReveal className="flex flex-col justify-between">
+    <div className="space-y-10">
+      <MotionReveal>
+        <section className="incident-response-toolbar">
           <div>
             <p className="art-eyebrow">Incident response</p>
-            <h1 className="mt-6 max-w-5xl text-[clamp(2.8rem,4.9vw,5.2rem)] font-black leading-[0.92] tracking-normal text-white">
-              Triage the
-              <br />
-              signal,
-              <br />
-              not the noise.
-            </h1>
+            <h1>Response field</h1>
+            <p>
+              Live operational attention, responder ownership, and recorded response activity from the incident API.
+            </p>
           </div>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="incident-response-toolbar__actions">
+            <span>
+              <Filter className="size-4" aria-hidden="true" />
+              {formatNumber(incidentsQuery.data?.pagination.total ?? 0)} in this view
+            </span>
             <Button>
               <Plus className="size-4" aria-hidden="true" />
               Create incident
             </Button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="size-4 text-primary" aria-hidden="true" />
-              {incidentsQuery.data?.pagination.total ?? 0} records in view
-            </div>
           </div>
-        </ScrollReveal>
+        </section>
+      </MotionReveal>
 
-        <ScrollReveal className="relative overflow-hidden rounded-lg border border-white/[0.07] bg-[radial-gradient(circle_at_50%_0%,rgb(255_120_80_/_0.2),transparent_24rem),linear-gradient(180deg,rgb(255_255_255_/_0.045),rgb(255_255_255_/_0.014))] p-6" delay={0.08}>
-          <div className="flex items-start justify-between gap-5">
-            <div>
-              <p className="text-[clamp(3.4rem,5.2vw,5.4rem)] font-black leading-none text-white">
-                {openCount.toString().padStart(2, "0")}
-              </p>
-              <p className="art-eyebrow mt-2">open response threads</p>
+      <MotionReveal>
+        <section className="incident-response-filters" aria-label="Filter incidents">
+          <IncidentFilter className="incident-response-filters__search" label="Search">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                aria-label="Search incidents"
+                className="pl-9"
+                placeholder="Title, service, or customer impact"
+                value={search}
+                onChange={(event) => {
+                  resetPage();
+                  setSearch(event.target.value);
+                }}
+              />
             </div>
-            <div className="text-right">
-              <p className="text-5xl font-black text-danger">{sev1Count}</p>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">SEV1</p>
-            </div>
-          </div>
-          <div className="mt-10 grid gap-3 md:grid-cols-3 xl:grid-cols-1">
-            <IncidentFilter label="Search">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder="Service, title, customer impact"
-                  value={search}
-                  onChange={(event) => {
-                    setPage(1);
-                    setSearch(event.target.value);
-                  }}
-                />
-              </div>
-            </IncidentFilter>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <IncidentFilter label="Status">
-                <Select
-                  value={status}
-                  onChange={(event) => {
-                    setPage(1);
-                    setStatus(event.target.value as IncidentStatus | "all");
-                  }}
-                >
-                  {statuses.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </Select>
-              </IncidentFilter>
-              <IncidentFilter label="Severity">
-                <Select
-                  value={severity}
-                  onChange={(event) => {
-                    setPage(1);
-                    setSeverity(event.target.value as IncidentSeverity | "all");
-                  }}
-                >
-                  {severities.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </Select>
-              </IncidentFilter>
-              <IncidentFilter label="Priority">
-                <Select
-                  value={priority}
-                  onChange={(event) => {
-                    setPage(1);
-                    setPriority(event.target.value as IncidentPriority | "all");
-                  }}
-                >
-                  {priorities.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </Select>
-              </IncidentFilter>
-            </div>
-          </div>
-        </ScrollReveal>
-      </section>
+          </IncidentFilter>
+          <IncidentFilter label="Status">
+            <Select
+              aria-label="Filter by status"
+              value={status}
+              onChange={(event) => {
+                resetPage();
+                setStatus(event.target.value as IncidentStatus | "all");
+              }}
+            >
+              {statuses.map((item) => (
+                <option key={item} value={item}>
+                  {item === "all" ? "All statuses" : titleCase(item)}
+                </option>
+              ))}
+            </Select>
+          </IncidentFilter>
+          <IncidentFilter label="Severity">
+            <Select
+              aria-label="Filter by severity"
+              value={severity}
+              onChange={(event) => {
+                resetPage();
+                setSeverity(event.target.value as IncidentSeverity | "all");
+              }}
+            >
+              {severities.map((item) => (
+                <option key={item} value={item}>
+                  {item === "all" ? "All severities" : item.toUpperCase()}
+                </option>
+              ))}
+            </Select>
+          </IncidentFilter>
+          <IncidentFilter label="Priority">
+            <Select
+              aria-label="Filter by priority"
+              value={priority}
+              onChange={(event) => {
+                resetPage();
+                setPriority(event.target.value as IncidentPriority | "all");
+              }}
+            >
+              {priorities.map((item) => (
+                <option key={item} value={item}>
+                  {item === "all" ? "All priorities" : titleCase(item)}
+                </option>
+              ))}
+            </Select>
+          </IncidentFilter>
+          <IncidentFilter label="Service">
+            <Select
+              aria-label="Filter by service"
+              value={serviceId}
+              onChange={(event) => {
+                resetPage();
+                setServiceId(event.target.value);
+              }}
+            >
+              <option value="all">All services</option>
+              {serviceOptions.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
+              ))}
+            </Select>
+          </IncidentFilter>
+          <IncidentFilter label="Assignee">
+            <Select
+              aria-label="Filter by assignee"
+              value={assigneeId}
+              onChange={(event) => {
+                resetPage();
+                setAssigneeId(event.target.value);
+              }}
+            >
+              <option value="all">All assignees</option>
+              {assigneeOptions.map((assignee) => (
+                <option key={assignee.id} value={assignee.id}>
+                  {assignee.name}
+                </option>
+              ))}
+            </Select>
+          </IncidentFilter>
+        </section>
+      </MotionReveal>
 
       {incidentsQuery.isLoading ? (
-        <IncidentFeedSkeleton />
+        <IncidentResponseSkeleton />
       ) : incidentsQuery.isError ? (
         <ErrorState
           title="Incidents unavailable"
-          description="The incident queue could not be loaded."
+          description="The live incident response field could not be loaded."
           action={<RetryButton onRetry={() => void incidentsQuery.refetch()} />}
         />
       ) : incidents.length ? (
-        <section className="space-y-2" aria-label="Response queue">
-          {incidents.map((incident, index) => (
-            <ScrollReveal key={incident.id} delay={index * 0.035} distance={16}>
-              <Link
-              key={incident.id}
-              to={`/incidents/${incident.id}`}
-              className="group grid gap-5 border-b border-white/[0.08] py-6 transition-colors hover:border-primary/25 md:grid-cols-[7rem_1fr_10rem]"
-              style={{ animationDelay: `${index * 55}ms` }}
-            >
-              <div>
-                <p className="text-5xl font-black leading-none text-white">{incident.severity.toUpperCase()}</p>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  {incident.priority}
-                </p>
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <IncidentSeverityBadge severity={incident.severity} />
-                  <PriorityBadge priority={incident.priority} />
-                  <IncidentStatusBadge status={incident.status} />
-                </div>
-                <h2 className="mt-4 text-2xl font-black leading-tight text-white transition-colors group-hover:text-primary md:text-4xl">
-                  {incident.title}
-                </h2>
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-                  {incident.customerImpact ?? "No customer impact recorded."}
-                </p>
-              </div>
-              <div className="md:text-right">
-                <p className="font-semibold text-white">{incident.serviceName}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{incident.assigneeName ?? "Unassigned"}</p>
-                <p className="mt-5 text-xs text-muted-foreground">{formatDateTime(incident.updatedAt)}</p>
-              </div>
-            </Link>
-            </ScrollReveal>
-          ))}
+        <>
+          <IncidentResponseField
+            detail={incidentDetailQuery.data?.incident}
+            detailError={incidentDetailQuery.isError}
+            detailLoading={incidentDetailQuery.isLoading}
+            incidents={incidents}
+            onSelect={(incidentId) => setSelectedIncidentId(incidentId || null)}
+            selectedIncidentId={selectedIncidentId}
+          />
 
-          <div className="flex items-center justify-between pt-6">
-            <p className="text-xs text-muted-foreground">
-              Page {pagination?.page ?? page} of {Math.max(1, pagination?.totalPages ?? 1)}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={page <= 1}
-                onClick={() => setPage((value) => Math.max(1, value - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={page >= (pagination?.totalPages ?? 1)}
-                onClick={() => setPage((value) => value + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </section>
+          <MotionReveal>
+            <section className="incident-response-queue" aria-labelledby="incident-queue-title">
+              <div className="incident-response-queue__header">
+                <div>
+                  <p className="art-eyebrow">Accessible incident index</p>
+                  <h2 id="incident-queue-title">Response queue</h2>
+                </div>
+                <p>
+                  Page {pagination?.page ?? page} of {Math.max(1, pagination?.totalPages ?? 1)} /{" "}
+                  {formatNumber(pagination?.total ?? incidents.length)} incidents
+                </p>
+              </div>
+
+              <div className="incident-response-queue__rows">
+                {incidents.map((incident, index) => (
+                  <MotionReveal delay={index * 0.035} key={incident.id} variant="enter">
+                    <div
+                      className="incident-response-queue__row"
+                      data-selected={selectedIncidentId === incident.id ? "true" : "false"}
+                      data-severity={incident.severity}
+                    >
+                      <button
+                        aria-label={`Select ${incident.title} in the incident response field`}
+                        aria-pressed={selectedIncidentId === incident.id}
+                        className="incident-response-queue__select"
+                        onClick={() => setSelectedIncidentId(incident.id)}
+                        type="button"
+                      >
+                        <span className="incident-response-queue__severity">
+                          <strong>{incident.severity.toUpperCase()}</strong>
+                          <small>{titleCase(incident.priority)}</small>
+                        </span>
+                        <span className="incident-response-queue__copy">
+                          <span className="incident-response-queue__badges">
+                            <IncidentSeverityBadge severity={incident.severity} />
+                            <PriorityBadge priority={incident.priority} />
+                            <IncidentStatusBadge status={incident.status} />
+                          </span>
+                          <strong>{incident.title}</strong>
+                          <small>{incident.customerImpact ?? "No customer impact recorded."}</small>
+                        </span>
+                        <span className="incident-response-queue__context">
+                          <strong>{incident.serviceName}</strong>
+                          <small>{incident.assigneeName ?? "Unassigned"}</small>
+                          <time dateTime={incident.updatedAt}>{formatDateTime(incident.updatedAt)}</time>
+                        </span>
+                      </button>
+                      <Button asChild size="icon" variant="ghost">
+                        <Link aria-label={`View ${incident.title}`} to={`/incidents/${incident.id}`}>
+                          <ArrowRight className="size-4" aria-hidden="true" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </MotionReveal>
+                ))}
+              </div>
+
+              <div className="incident-response-queue__pagination">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={page <= 1}
+                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={page >= (pagination?.totalPages ?? 1)}
+                  onClick={() => setPage((value) => value + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </section>
+          </MotionReveal>
+        </>
       ) : (
-        <EmptyState title="No incidents match this view" description="Clear filters or create a new incident." />
+        <EmptyState
+          title="No incidents match this response view"
+          description="Adjust the live API filters or create a new incident."
+        />
       )}
     </div>
   );
 }
 
-function IncidentFilter({ label, children }: { label: string; children: ReactNode }) {
+function IncidentFilter({
+  children,
+  className,
+  label
+}: {
+  children: ReactNode;
+  className?: string;
+  label: string;
+}) {
   return (
-    <label className="block space-y-2">
+    <label className={className}>
       <FieldLabel>{label}</FieldLabel>
       {children}
     </label>
   );
 }
 
-function IncidentFeedSkeleton() {
+function IncidentResponseSkeleton() {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <Skeleton key={index} className="h-32" />
-      ))}
+    <div className="space-y-8" aria-label="Loading incident response field">
+      <Skeleton className="h-[48rem]" />
+      <Skeleton className="h-48" />
+      <Skeleton className="h-80" />
     </div>
   );
 }
