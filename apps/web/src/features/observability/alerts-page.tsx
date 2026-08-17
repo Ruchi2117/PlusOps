@@ -1,152 +1,203 @@
-import { BellRing, Play, ShieldAlert } from "lucide-react";
+import type { AlertState, MetricQueryRequest } from "@plusops/contracts";
+import { BellRing, Filter, Play } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
+import { MotionReveal } from "../../components/spatial";
 import { Button } from "../../components/ui/button";
 import { EmptyState, ErrorState, RetryButton } from "../../components/ui/data-state";
-import { ScrollReveal } from "../../components/ui/scroll-reveal";
+import { FieldLabel, Input, Select } from "../../components/ui/form-controls";
 import { AlertSeverityBadge, AlertStateBadge } from "../../components/ui/status-badge";
 import { Skeleton } from "../../components/ui/skeleton";
-import { formatDateTime, formatNumber, titleCase } from "../../lib/format";
-import { visualAssets } from "../../lib/visual-assets";
-import { useAlertEvaluation, useAlerts } from "../platform/use-platform-data";
+import { formatDateTime, titleCase } from "../../lib/format";
+import { getOperationalMetricWindow } from "../platform/platform-api";
+import { useAlertEvaluation, useAlerts, useMetricQuery, useMetrics, useServices } from "../platform/use-platform-data";
+import { AlertThresholdField } from "./alert-threshold-field";
+import { formatThreshold, metricForAlert } from "./metric-alert-model";
 
-const alertPositions = [
-  { x: "22%", y: "54%" },
-  { x: "56%", y: "37%" },
-  { x: "76%", y: "66%" },
-  { x: "39%", y: "73%" }
-];
+const alertStates: Array<AlertState | "all"> = ["all", "ok", "pending", "firing", "resolved", "muted"];
 
 export function AlertsPage() {
+  const [search, setSearch] = useState("");
+  const [selectedAlertId, setSelectedAlertId] = useState("");
+  const [serviceId, setServiceId] = useState("all");
+  const [state, setState] = useState<AlertState | "all">("all");
   const alertsQuery = useAlerts();
+  const metricsQuery = useMetrics();
+  const servicesQuery = useServices();
   const evaluateAlertMutation = useAlertEvaluation();
   const alerts = alertsQuery.data?.data ?? [];
-  const firing = alerts.filter((alert) => alert.state === "firing").length;
-  const pending = alerts.filter((alert) => alert.state === "pending").length;
-  const primaryAlert = alerts.find((alert) => alert.state === "firing") ?? alerts[0];
+  const metrics = metricsQuery.data?.data ?? [];
+  const services = servicesQuery.data?.data ?? [];
+  const filteredAlerts = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    return alerts.filter((alert) => {
+      const matchesSearch = !normalizedSearch || `${alert.name} ${alert.description ?? ""}`.toLowerCase().includes(normalizedSearch);
+      const matchesState = state === "all" || alert.state === state;
+      const alertServiceId = alert.condition.serviceId ?? metricForAlert(metrics, alert)?.serviceId;
+      const matchesService = serviceId === "all" || alertServiceId === serviceId;
+      return matchesSearch && matchesState && matchesService;
+    });
+  }, [alerts, metrics, search, serviceId, state]);
+  const selectedAlert = filteredAlerts.find((alert) => alert.id === selectedAlertId) ?? filteredAlerts[0];
+  const selectedMetric = metricForAlert(metrics, selectedAlert);
+  const selectedServiceId = selectedAlert?.condition.serviceId ?? selectedMetric?.serviceId;
+  const selectedService = services.find((service) => service.id === selectedServiceId);
+  const metricQueryInput = useMemo<Partial<MetricQueryRequest>>(() => {
+    if (!selectedAlert) {
+      return { serviceId: "" };
+    }
 
-  if (alertsQuery.isLoading) {
-    return <Skeleton className="h-[calc(100vh-8rem)]" />;
-  }
+    const operationalWindow = getOperationalMetricWindow();
+    return {
+      metricDefinitionId: selectedAlert.condition.metricDefinitionId,
+      metricName: selectedAlert.condition.metricName,
+      serviceId: selectedServiceId,
+      ...operationalWindow,
+      filters: selectedAlert.condition.filters,
+      groupBy: [],
+      aggregation: selectedAlert.condition.aggregation,
+      percentile: selectedAlert.condition.percentile,
+      page: 1,
+      pageSize: 100,
+      sortBy: "timestamp",
+      sortDirection: "asc",
+      limit: 100
+    };
+  }, [selectedAlert, selectedServiceId]);
+  const signalQuery = useMetricQuery(metricQueryInput);
+  const evaluationResult = evaluateAlertMutation.data;
+  const evaluation = evaluationResult && evaluationResult.alert.id === selectedAlert?.id
+    ? evaluationResult.evaluation
+    : undefined;
 
-  if (alertsQuery.isError) {
-    return (
-      <ErrorState
-        title="Alerts unavailable"
-        description="Alert rules could not be loaded."
-        action={<RetryButton onRetry={() => void alertsQuery.refetch()} />}
-      />
-    );
-  }
+  useEffect(() => {
+    if (selectedAlert && selectedAlert.id !== selectedAlertId) {
+      setSelectedAlertId(selectedAlert.id);
+    }
+  }, [selectedAlert, selectedAlertId]);
 
   return (
-    <div className="space-y-16">
-      <section className="relative min-h-[calc(100vh-8rem)] overflow-hidden rounded-lg border border-white/[0.07] bg-black">
-        <img className="absolute inset-0 h-full w-full object-cover opacity-48" src={visualAssets.redPanelCorridor} alt="" loading="lazy" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_58%,rgb(255_47_47_/_0.28),transparent_18rem),linear-gradient(90deg,rgb(0_0_0_/_0.85),rgb(0_0_0_/_0.26),rgb(0_0_0_/_0.8))]" />
-        <div className="absolute left-0 top-0 h-full w-full" aria-hidden="true">
-          {alerts.map((alert, index) => {
-            const position = alertPositions[index] ?? alertPositions[0]!;
+    <div className="alerts-experience space-y-10">
+      <MotionReveal className="observability-controls">
+        <div className="observability-controls__heading">
+          <Filter className="size-4 text-primary" aria-hidden="true" />
+          <div>
+            <p className="art-eyebrow">Alert controls</p>
+            <p className="observability-controls__description">
+              Filter the field without losing its accessible rule index.
+            </p>
+          </div>
+        </div>
+        <div className="observability-controls__grid observability-controls__grid--alerts">
+          <label className="space-y-2">
+            <FieldLabel>Search</FieldLabel>
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search rules" />
+          </label>
+          <label className="space-y-2">
+            <FieldLabel>Service</FieldLabel>
+            <Select value={serviceId} onChange={(event) => setServiceId(event.target.value)}>
+              <option value="all">All services</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>{service.name}</option>
+              ))}
+            </Select>
+          </label>
+          <label className="space-y-2">
+            <FieldLabel>Alert state</FieldLabel>
+            <Select value={state} onChange={(event) => setState(event.target.value as AlertState | "all")}>
+              {alertStates.map((item) => (
+                <option key={item} value={item}>{titleCase(item)}</option>
+              ))}
+            </Select>
+          </label>
+        </div>
+      </MotionReveal>
+
+      {alertsQuery.isLoading || metricsQuery.isLoading || servicesQuery.isLoading ? (
+        <Skeleton className="h-[48rem]" />
+      ) : alertsQuery.isError || metricsQuery.isError || servicesQuery.isError ? (
+        <ErrorState
+          title="Alert environment unavailable"
+          description="Alert rules, metrics, or services could not be loaded."
+          action={<RetryButton onRetry={() => void Promise.all([alertsQuery.refetch(), metricsQuery.refetch(), servicesQuery.refetch()])} />}
+        />
+      ) : !selectedAlert ? (
+        <EmptyState title="No alert rules match these controls" />
+      ) : signalQuery.isError ? (
+        <ErrorState
+          title="Related metric signal unavailable"
+          description="The rule is available, but its metric query failed."
+          action={<RetryButton onRetry={() => void signalQuery.refetch()} />}
+        />
+      ) : signalQuery.isLoading ? (
+        <Skeleton className="h-[48rem]" />
+      ) : (
+        <AlertThresholdField
+          alerts={filteredAlerts}
+          evaluation={evaluation}
+          evaluationPending={evaluateAlertMutation.isPending}
+          metric={selectedMetric}
+          onEvaluate={(alertId) => evaluateAlertMutation.mutate(alertId)}
+          onSelect={setSelectedAlertId}
+          points={signalQuery.data?.data ?? []}
+          selectedAlert={selectedAlert}
+          service={selectedService}
+        />
+      )}
+
+      <section>
+        <MotionReveal className="alert-rule-index">
+          <div className="alert-rule-index__header">
+          <div>
+            <p className="art-eyebrow">Accessible alert rule index</p>
+            <p className="observability-controls__description">
+              Every field object remains available as precise text and keyboard controls.
+            </p>
+          </div>
+          <BellRing className="size-5 text-primary" aria-hidden="true" />
+          </div>
+          <div className="alert-rule-index__list">
+          {filteredAlerts.map((alert) => {
+            const metric = metricForAlert(metrics, alert);
+            const service = services.find((item) => item.id === (alert.condition.serviceId ?? metric?.serviceId));
             return (
-              <div
+              <article
+                className="alert-rule-index__row"
+                data-selected={alert.id === selectedAlert?.id ? "true" : "false"}
                 key={alert.id}
-                className="alert-disturbance"
-                data-state={alert.state}
-                style={{ left: position.x, top: position.y }}
-              />
+              >
+                <button
+                  aria-pressed={alert.id === selectedAlert?.id}
+                  className="alert-rule-index__select"
+                  onClick={() => setSelectedAlertId(alert.id)}
+                  type="button"
+                >
+                  <span className="alert-rule-index__badges">
+                    <AlertSeverityBadge severity={alert.severity} />
+                    <AlertStateBadge state={alert.state} />
+                  </span>
+                  <strong>{alert.name}</strong>
+                  <small>
+                    {service?.name ?? "Unscoped service"} · {metric?.displayName ?? alert.condition.metricName ?? "Metric unavailable"}
+                  </small>
+                  <small>{formatThreshold(alert.condition.threshold)} · Updated {formatDateTime(alert.updatedAt)}</small>
+                </button>
+                <Button
+                  aria-label={`Evaluate ${alert.name}`}
+                  disabled={evaluateAlertMutation.isPending}
+                  onClick={() => evaluateAlertMutation.mutate(alert.id)}
+                  size="sm"
+                  variant="secondary"
+                >
+                  <Play className="size-4" aria-hidden="true" />
+                  Evaluate
+                </Button>
+              </article>
             );
           })}
-        </div>
-
-        <div className="relative z-10 flex min-h-[calc(100vh-8rem)] flex-col p-6 md:p-10 lg:p-14">
-          <ScrollReveal className="max-w-4xl pt-10 md:pt-14 lg:pt-16">
-            <p className="art-eyebrow">Alert command center</p>
-            <h1 className="mt-6 text-[clamp(2.8rem,5vw,5.4rem)] font-black leading-[0.9] text-white">
-              Alerts
-              <br />
-              need
-              <br />
-              attention.
-            </h1>
-          </ScrollReveal>
-
-          <ScrollReveal className="mt-auto flex justify-end pt-12" delay={0.08}>
-            <div className="max-w-xs border-t border-white/[0.14] pt-4 text-right">
-              <p className="text-[clamp(3.6rem,5.4vw,5.8rem)] font-black leading-none text-white">{formatNumber(firing)}</p>
-              <p className="art-eyebrow mt-2">firing alerts</p>
-              <p className="mt-4 text-sm leading-6 text-white/68">{primaryAlert?.name ?? "No firing alert."}</p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      <section className="grid gap-10 xl:grid-cols-[0.72fr_1.28fr]">
-        <ScrollReveal>
-          <p className="art-eyebrow">Rule posture</p>
-          <div className="mt-8 grid gap-5">
-            <AlertSignal icon={ShieldAlert} label="Firing" value={firing} />
-            <AlertSignal icon={BellRing} label="Pending" value={pending} />
-            <AlertSignal icon={Play} label="Rules" value={alerts.length} />
           </div>
-          <Button className="mt-8">Create alert</Button>
-        </ScrollReveal>
-
-        <ScrollReveal delay={0.08}>
-          <p className="art-eyebrow">Alert rules</p>
-          <div className="mt-6">
-            {alerts.length ? (
-              <div className="space-y-1">
-                {alerts.map((alert, index) => (
-                  <ScrollReveal key={alert.id} delay={index * 0.04} distance={16}>
-                    <article className="group grid gap-5 border-b border-white/[0.08] py-6 lg:grid-cols-[1fr_auto]">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <AlertSeverityBadge severity={alert.severity} />
-                        <AlertStateBadge state={alert.state} />
-                      </div>
-                      <h2 className="mt-4 text-3xl font-black leading-none text-white transition-colors group-hover:text-primary">
-                        {alert.name}
-                      </h2>
-                      <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                        {alert.description ?? "No alert description."}
-                      </p>
-                      <div className="mt-4 grid gap-3 text-xs text-muted-foreground md:grid-cols-4">
-                        <span>Metric: {alert.condition.metricName ?? alert.condition.metricDefinitionId}</span>
-                        <span>Aggregation: {titleCase(alert.condition.aggregation)}</span>
-                        <span>Window: {Math.round(alert.condition.evaluationWindowSeconds / 60)} min</span>
-                        <span>Updated: {formatDateTime(alert.updatedAt)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-start justify-end">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={evaluateAlertMutation.isPending}
-                        onClick={() => evaluateAlertMutation.mutate(alert.id)}
-                      >
-                        <Play className="size-4" aria-hidden="true" />
-                        Evaluate
-                      </Button>
-                    </div>
-                  </article>
-                  </ScrollReveal>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No alert rules" />
-            )}
-          </div>
-        </ScrollReveal>
+        </MotionReveal>
       </section>
-    </div>
-  );
-}
-
-function AlertSignal({ icon: Icon, label, value }: { icon: typeof ShieldAlert; label: string; value: number }) {
-  return (
-    <div className="border-t border-white/[0.14] pt-4">
-      <Icon className="size-4 text-primary" aria-hidden="true" />
-      <p className="mt-4 text-6xl font-black text-white">{formatNumber(value)}</p>
-      <p className="art-eyebrow mt-2">{label}</p>
     </div>
   );
 }
