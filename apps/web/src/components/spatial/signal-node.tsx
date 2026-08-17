@@ -20,6 +20,7 @@ export type SignalNodeStatus =
   | "pending"
   | "firing"
   | "resolved"
+  | "muted"
   | "warning"
   | "critical";
 export type SignalNodeSeverity = "info" | "warning" | "critical";

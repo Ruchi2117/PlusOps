@@ -5,15 +5,17 @@ import { cn } from "../../lib/cn";
 export type ThresholdBandState = "normal" | "warning" | "critical" | "firing" | "resolved";
 
 export type ThresholdBandProps = {
+  boundaryAt?: number;
+  boundaryLabel?: string;
   className?: string;
-  criticalAt: number;
+  criticalAt?: number;
   label: string;
   max?: number;
   min?: number;
   state: ThresholdBandState;
   unit?: string;
   value: number;
-  warningAt: number;
+  warningAt?: number;
 };
 
 type ThresholdBandStyle = CSSProperties & {
@@ -23,6 +25,8 @@ type ThresholdBandStyle = CSSProperties & {
 };
 
 export function ThresholdBand({
+  boundaryAt,
+  boundaryLabel = "Boundary",
   className,
   criticalAt,
   label,
@@ -33,21 +37,38 @@ export function ThresholdBand({
   value,
   warningAt
 }: ThresholdBandProps) {
+  const singleBoundary = boundaryAt !== undefined;
+  const resolvedWarningAt = warningAt ?? boundaryAt ?? min;
+  const resolvedCriticalAt = criticalAt ?? boundaryAt ?? max;
   const style: ThresholdBandStyle = {
-    "--threshold-critical": `${toPercent(criticalAt, min, max)}%`,
+    "--threshold-critical": `${toPercent(resolvedCriticalAt, min, max)}%`,
     "--threshold-value": `${toPercent(value, min, max)}%`,
-    "--threshold-warning": `${toPercent(warningAt, min, max)}%`
+    "--threshold-warning": `${toPercent(resolvedWarningAt, min, max)}%`
   };
 
   return (
-    <figure className={cn("threshold-band", className)} data-state={state} style={style}>
+    <figure
+      className={cn("threshold-band", className)}
+      data-boundary={singleBoundary ? "single" : "range"}
+      data-state={state}
+      style={style}
+    >
       <div className="threshold-band__header">
         <figcaption>
           <p className="threshold-band__label">{label}</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Warning at {warningAt}
-            {unit}, critical at {criticalAt}
-            {unit}
+            {singleBoundary ? (
+              <>
+                {boundaryLabel} at {boundaryAt}
+                {unit}
+              </>
+            ) : (
+              <>
+                Warning at {resolvedWarningAt}
+                {unit}, critical at {resolvedCriticalAt}
+                {unit}
+              </>
+            )}
           </p>
         </figcaption>
         <p className="threshold-band__value">
@@ -60,9 +81,19 @@ export function ThresholdBand({
         <span className="threshold-band__marker" />
       </div>
       <div className="threshold-band__legend" aria-hidden="true">
-        <span>Normal</span>
-        <span>Warning</span>
-        <span>Critical</span>
+        {singleBoundary ? (
+          <>
+            <span>Within boundary</span>
+            <span>{boundaryLabel}</span>
+            <span>Beyond boundary</span>
+          </>
+        ) : (
+          <>
+            <span>Normal</span>
+            <span>Warning</span>
+            <span>Critical</span>
+          </>
+        )}
       </div>
     </figure>
   );

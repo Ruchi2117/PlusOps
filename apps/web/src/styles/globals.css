@@ -1185,6 +1185,12 @@ select option {
   opacity: 0.58;
 }
 
+.signal-node[data-status="muted"] {
+  border-style: dashed;
+  border-color: rgb(255 255 255 / 0.16);
+  opacity: 0.62;
+}
+
 .signal-node[data-status="degraded"],
 .signal-node[data-status="warning"],
 .signal-node[data-status="pending"] {
@@ -1290,7 +1296,7 @@ select option {
 
 .signal-ribbon svg {
   width: 100%;
-  min-height: var(--signal-ribbon-height, 12rem);
+  height: var(--signal-ribbon-height, 12rem);
   overflow: visible;
 }
 
@@ -1393,6 +1399,20 @@ select option {
 
 .threshold-band__track::after {
   left: var(--threshold-critical);
+}
+
+.threshold-band[data-boundary="single"] .threshold-band__track {
+  background:
+    linear-gradient(
+      90deg,
+      rgb(74 222 128 / 0.09) 0 var(--threshold-critical),
+      rgb(255 79 79 / 0.14) var(--threshold-critical) 100%
+    ),
+    linear-gradient(180deg, transparent, rgb(255 255 255 / 0.035));
+}
+
+.threshold-band[data-boundary="single"] .threshold-band__track::before {
+  display: none;
 }
 
 .threshold-band__signal {
@@ -2686,6 +2706,285 @@ select option {
   padding-top: 1.5rem;
 }
 
+.observability-controls {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.52fr) minmax(0, 1.48fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: end;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding: 1.4rem 0;
+}
+
+.observability-controls__heading {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.observability-controls__description {
+  margin-top: 0.55rem;
+  max-width: 38rem;
+  color: var(--ops-color-muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.observability-controls__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.observability-controls__grid--alerts {
+  grid-template-columns: minmax(11rem, 1.2fr) repeat(2, minmax(9rem, 1fr));
+}
+
+.observability-controls__grid > label {
+  min-width: 0;
+}
+
+.metrics-signal-field,
+.alert-threshold-field {
+  min-height: clamp(49rem, calc(100vh - 5rem), 61rem);
+}
+
+.metrics-signal-field .operational-scene__content,
+.alert-threshold-field .operational-scene__content {
+  gap: 1.5rem;
+}
+
+.metrics-signal-field__copy,
+.alert-threshold-field__copy {
+  width: min(45%, 35rem);
+}
+
+.metrics-signal-field__summary,
+.alert-threshold-field__summary {
+  margin-top: 1.35rem;
+  max-width: 32rem;
+  color: rgb(255 255 255 / 0.62);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.metrics-signal-field__stream,
+.alert-threshold-field__signal {
+  width: min(58%, 48rem);
+  margin-top: auto;
+  border-top: 1px solid rgb(255 255 255 / 0.14);
+  padding-top: 1rem;
+}
+
+.metrics-signal-field__stream-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.metrics-signal-field__value {
+  margin-top: 0.45rem;
+  color: white;
+  font-size: clamp(2.4rem, 5vw, 4.7rem);
+  font-weight: 900;
+  line-height: 0.92;
+}
+
+.metrics-signal-field__threshold,
+.alert-threshold-field__threshold {
+  width: min(58%, 48rem);
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  padding-top: 1rem;
+}
+
+.metrics-signal-field__causal-label,
+.alert-threshold-field__causal-label {
+  margin-bottom: 1rem;
+  color: var(--ops-color-amber-soft);
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.metrics-signal-field__no-threshold,
+.metrics-signal-field__empty-signal,
+.alert-threshold-field__empty-signal {
+  width: min(58%, 48rem);
+  margin-top: auto;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  padding-top: 1rem;
+  color: var(--ops-color-muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.metrics-signal-field__alert-node,
+.alert-threshold-field__node {
+  max-width: 11.5rem;
+}
+
+.metrics-signal-field__alert-node .signal-node__label,
+.alert-threshold-field__node .signal-node__label {
+  overflow-wrap: anywhere;
+}
+
+.metrics-signal-field__inspector,
+.alert-threshold-field__inspector {
+  width: min(23rem, 30%);
+  max-height: 31rem;
+  overflow-y: auto;
+}
+
+.metrics-signal-field__inspector .scene-inspector__title,
+.alert-threshold-field__inspector .scene-inspector__title {
+  font-size: clamp(1.45rem, 2.4vw, 2.45rem);
+}
+
+.observability-index {
+  display: grid;
+  grid-template-columns: minmax(15rem, 0.66fr) minmax(0, 1.34fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  padding-top: 2rem;
+}
+
+.observability-index__facts {
+  display: grid;
+  gap: 1.4rem;
+  margin-top: 1.5rem;
+}
+
+.observability-index__facts > div {
+  display: grid;
+  gap: 0.3rem;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  padding-top: 1rem;
+}
+
+.observability-index__facts strong {
+  color: white;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.observability-index__facts span {
+  color: var(--ops-color-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.observability-index__list {
+  min-width: 0;
+}
+
+.observability-index__row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding: 1rem 0;
+  color: white;
+  text-align: left;
+  transition: border-color var(--ops-duration-fast) var(--ops-ease-standard);
+}
+
+.observability-index__row:hover,
+.observability-index__row:focus-visible,
+.observability-index__row[data-selected="true"] {
+  border-color: rgb(255 132 43 / 0.56);
+  outline: none;
+}
+
+.observability-index__row > span:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.3rem;
+}
+
+.observability-index__row strong {
+  font-size: 1rem;
+}
+
+.observability-index__row small {
+  overflow: hidden;
+  color: var(--ops-color-muted);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alert-threshold-field__signal {
+  margin-top: auto;
+}
+
+.alert-rule-index {
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  padding-top: 2rem;
+}
+
+.alert-rule-index__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.alert-rule-index__list {
+  margin-top: 1rem;
+}
+
+.alert-rule-index__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  padding: 1rem 0;
+}
+
+.alert-rule-index__row[data-selected="true"] {
+  border-color: rgb(255 132 43 / 0.56);
+}
+
+.alert-rule-index__select {
+  display: grid;
+  min-width: 0;
+  gap: 0.38rem;
+  color: white;
+  text-align: left;
+}
+
+.alert-rule-index__select:focus-visible {
+  outline: 2px solid rgb(255 181 108 / 0.72);
+  outline-offset: 4px;
+}
+
+.alert-rule-index__select strong {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.alert-rule-index__select small {
+  overflow: hidden;
+  color: var(--ops-color-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alert-rule-index__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.15rem;
+}
+
 @media (max-width: 900px) {
   .responsive-editorial-title[data-size="hero"] {
     font-size: clamp(2.75rem, 14vw, 4.6rem);
@@ -2938,6 +3237,48 @@ select option {
     text-align: left;
   }
 
+  .observability-controls,
+  .observability-index {
+    grid-template-columns: 1fr;
+  }
+
+  .observability-controls__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metrics-signal-field .operational-scene__content,
+  .alert-threshold-field .operational-scene__content {
+    min-height: auto;
+  }
+
+  .metrics-signal-field__copy,
+  .alert-threshold-field__copy,
+  .metrics-signal-field__stream,
+  .alert-threshold-field__signal,
+  .metrics-signal-field__threshold,
+  .alert-threshold-field__threshold,
+  .metrics-signal-field__no-threshold,
+  .metrics-signal-field__empty-signal,
+  .alert-threshold-field__empty-signal {
+    width: 100%;
+  }
+
+  .metrics-signal-field .operational-scene__spatial,
+  .alert-threshold-field .operational-scene__spatial {
+    min-height: auto;
+  }
+
+  .metrics-signal-field__inspector,
+  .alert-threshold-field__inspector {
+    width: 100%;
+    max-height: none;
+  }
+
+  .metrics-signal-field .signal-node[data-glow="true"],
+  .alert-threshold-field .signal-node[data-glow="true"] {
+    animation: none;
+  }
+
   .system-field {
     min-height: 46rem;
   }
@@ -2969,6 +3310,37 @@ select option {
 }
 
 @media (max-width: 560px) {
+  .observability-controls__grid,
+  .observability-controls__grid--alerts {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-signal-field .operational-scene__spatial,
+  .alert-threshold-field .operational-scene__spatial {
+    grid-template-columns: 1fr;
+  }
+
+  .threshold-band__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .threshold-band__legend {
+    gap: 0.45rem;
+    font-size: 0.6rem;
+  }
+
+  .alert-rule-index__row {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-rule-index__select small,
+  .observability-index__row small {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
   .service-universe-filters {
     grid-template-columns: 1fr;
   }
