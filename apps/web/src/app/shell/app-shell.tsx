@@ -13,7 +13,7 @@ import {
   UserRound,
   X
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router";
 
 import { CommandPalette } from "../../components/command-palette";
@@ -24,6 +24,7 @@ import { cn } from "../../lib/cn";
 import { useSessionStore } from "../../lib/session-store";
 import { useUIStore } from "../../lib/ui-store";
 import { visualAssets } from "../../lib/visual-assets";
+import { useOverlayA11y } from "../../lib/use-overlay-a11y";
 
 type NavigationItem = {
   label: string;
@@ -48,8 +49,14 @@ const secondaryNavigationItems: NavigationItem[] = [
 
 export function AppShell() {
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
+  const mobileNavigationRef = useRef<HTMLElement>(null);
   const user = useSessionStore((state) => state.user);
   const { openCommandPalette, toggleCommandPalette, openNotificationCenter } = useUIStore();
+  useOverlayA11y({
+    containerRef: mobileNavigationRef,
+    onClose: () => setIsMobileNavigationOpen(false),
+    open: isMobileNavigationOpen
+  });
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -150,7 +157,7 @@ export function AppShell() {
             aria-label="Close navigation"
             onClick={() => setIsMobileNavigationOpen(false)}
           />
-          <aside className="absolute inset-y-3 left-3 w-72 rounded-lg border border-white/[0.08] bg-surface/92 px-3 py-4 shadow-panel backdrop-blur-2xl">
+          <aside ref={mobileNavigationRef} className="absolute inset-y-3 left-3 w-72 rounded-lg border border-white/[0.08] bg-surface/92 px-3 py-4 shadow-panel backdrop-blur-2xl" aria-label="Mobile navigation">
             <div className="flex items-center justify-between px-2">
               <Brand />
               <Button

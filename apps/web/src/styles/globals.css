@@ -3677,3 +3677,29 @@ select option {
   fill: rgb(163 176 194 / 0.78);
   font-size: 12px;
 }
+
+/* Keep keyboard focus visible across custom spatial surfaces. */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid rgb(255 181 108 / 0.9);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .scene-inspector__items {
+    grid-template-columns: 1fr;
+  }
+
+  .scene-inspector__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .scene-inspector__actions > * {
+    min-width: 0;
+  }
+
+  .ai-command-rail,
+  .ai-playground-strip {
+    overflow-wrap: anywhere;
+  }
+}

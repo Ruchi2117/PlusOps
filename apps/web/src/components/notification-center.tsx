@@ -1,9 +1,11 @@
 import { Bell, CheckCircle2, X } from "lucide-react";
+import { useId, useRef } from "react";
 import { Link } from "react-router";
 
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { useUIStore } from "../lib/ui-store";
+import { useOverlayA11y } from "../lib/use-overlay-a11y";
 
 const notifications = [
   {
@@ -28,26 +30,30 @@ const notifications = [
 
 export function NotificationCenter() {
   const { isNotificationCenterOpen, closeNotificationCenter } = useUIStore();
+  const panelRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  useOverlayA11y({ containerRef: panelRef, initialFocusRef: closeRef, onClose: closeNotificationCenter, open: isNotificationCenterOpen });
 
   if (!isNotificationCenterOpen) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <button
         className="absolute inset-0 bg-black/45 backdrop-blur-sm"
         type="button"
         aria-label="Close notifications"
         onClick={closeNotificationCenter}
       />
-      <aside className="absolute inset-y-3 right-3 w-[calc(100%-1.5rem)] max-w-md rounded-lg border border-white/[0.08] bg-surface/88 p-5 shadow-[0_30px_120px_rgb(0_0_0_/_0.5)] backdrop-blur-2xl">
+      <aside ref={panelRef} className="absolute inset-y-3 right-3 w-[calc(100%-1.5rem)] max-w-md rounded-lg border border-white/[0.08] bg-surface/88 p-5 shadow-[0_30px_120px_rgb(0_0_0_/_0.5)] backdrop-blur-2xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Bell className="size-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-bold">Notifications</h2>
+            <h2 id={titleId} className="text-lg font-bold">Notifications</h2>
           </div>
-          <Button size="icon" variant="ghost" aria-label="Close notifications" onClick={closeNotificationCenter}>
+          <Button ref={closeRef} size="icon" variant="ghost" aria-label="Close notifications" onClick={closeNotificationCenter}>
             <X className="size-4" aria-hidden="true" />
           </Button>
         </div>

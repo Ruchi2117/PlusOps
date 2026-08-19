@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 
 import { cn } from "../../lib/cn";
+import { useOverlayA11y } from "../../lib/use-overlay-a11y";
 
 export type SceneInspectorItem = {
   detail?: string;
@@ -27,16 +28,21 @@ export function SceneInspector({
   subtitle,
   title
 }: SceneInspectorProps) {
+  const inspectorRef = useRef<HTMLElement>(null);
+  const titleId = useId();
+  useOverlayA11y({ containerRef: inspectorRef, onClose: onClose ?? (() => undefined), open: Boolean(onClose) });
   return (
     <aside
+      ref={inspectorRef}
       aria-label={`${title} operational context`}
+      aria-labelledby={titleId}
       className={cn("scene-inspector", className)}
       role={onClose ? "dialog" : "complementary"}
     >
       <div className="scene-inspector__header">
         <div>
           <p className="art-eyebrow">Inspector</p>
-          <h2 className="scene-inspector__title">{title}</h2>
+          <h2 id={titleId} className="scene-inspector__title">{title}</h2>
           {subtitle ? <p className="scene-inspector__subtitle">{subtitle}</p> : null}
         </div>
         {onClose ? (
