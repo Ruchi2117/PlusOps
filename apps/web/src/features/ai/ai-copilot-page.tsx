@@ -340,7 +340,7 @@ export function AICopilotPage() {
         </OperationalScene>
       </MotionReveal>
 
-      <MotionReveal variant="slide">
+      <MotionReveal className="ai-command-reveal" variant="slide">
         <section className="ai-command-rail" aria-labelledby="ai-command-title">
           <div>
             <p className="art-eyebrow">Current context</p>
@@ -365,7 +365,7 @@ export function AICopilotPage() {
         </section>
       </MotionReveal>
 
-      <section className="grid gap-10 xl:grid-cols-[0.82fr_1.18fr]">
+      <section className="ai-workflow-grid grid gap-10 xl:grid-cols-[0.82fr_1.18fr]">
         <ScrollReveal>
           <p className="art-eyebrow">Response thread</p>
           <div className="mt-6 space-y-5">
@@ -380,7 +380,7 @@ export function AICopilotPage() {
 
         <ScrollReveal delay={0.08}>
           <p className="art-eyebrow">Engineering workflows</p>
-          <div className="mt-6 space-y-5">
+          <div className="ai-workflow-section mt-6 space-y-5">
             <TabList>
               {tools.map((tool) => (
                 <TabButton key={tool.id} active={activeTool === tool.id} onClick={() => setActiveTool(tool.id)}>

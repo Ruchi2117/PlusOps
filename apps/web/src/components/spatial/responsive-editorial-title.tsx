@@ -33,6 +33,7 @@ export function ResponsiveEditorialTitle({
         data-align={align}
         data-size={size}
         data-width={width}
+        data-wrap="balanced"
       >
         {children}
       </Component>

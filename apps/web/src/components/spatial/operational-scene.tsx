@@ -33,6 +33,8 @@ export function OperationalScene({
     <section
       className={cn("operational-scene", className)}
       data-height={height}
+      data-has-inspector={inspector ? "true" : "false"}
+      data-has-spatial={spatialLayer ? "true" : "false"}
       data-overlay={overlay}
       data-tone={tone}
       {...props}

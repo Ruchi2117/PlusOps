@@ -89,6 +89,7 @@
 }
 
 html {
+  overflow-x: clip;
   font-family:
     Inter,
     ui-sans-serif,
@@ -102,6 +103,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: clip;
   min-height: 100vh;
   background:
     radial-gradient(ellipse at 18% 0%, rgb(255 91 35 / 0.2), transparent 34rem),
@@ -958,7 +960,9 @@ select option {
 
 .responsive-editorial-title {
   max-width: min(var(--editorial-max-width, 58rem), 100%);
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
   color: var(--ops-color-cream);
   font-weight: 900;
   letter-spacing: 0;
@@ -968,12 +972,12 @@ select option {
 
 .responsive-editorial-title[data-size="hero"] {
   --editorial-line-height: 0.88;
-  font-size: clamp(3.1rem, 7vw, 7.4rem);
+  font-size: clamp(2.8rem, 5.8vw, 5.8rem);
 }
 
 .responsive-editorial-title[data-size="section"] {
   --editorial-line-height: 0.94;
-  font-size: clamp(2.35rem, 5vw, 5.2rem);
+  font-size: clamp(2.25rem, 4.25vw, 4.35rem);
 }
 
 .responsive-editorial-title[data-size="compact"] {
@@ -982,7 +986,7 @@ select option {
 }
 
 .responsive-editorial-title[data-width="tight"] {
-  --editorial-max-width: 38rem;
+  --editorial-max-width: 34rem;
 }
 
 .responsive-editorial-title[data-width="normal"] {
@@ -1066,6 +1070,10 @@ select option {
   min-height: inherit;
   flex-direction: column;
   padding: var(--ops-space-scene);
+}
+
+.operational-scene[data-has-inspector="true"] .operational-scene__content {
+  padding-right: clamp(24rem, 31%, 30rem);
 }
 
 .operational-scene__spatial {
@@ -1295,6 +1303,7 @@ select option {
 }
 
 .signal-ribbon svg {
+  aspect-ratio: 2.4 / 1;
   width: 100%;
   height: var(--signal-ribbon-height, 12rem);
   overflow: visible;
@@ -1595,7 +1604,7 @@ select option {
 
 .service-universe__title {
   --editorial-max-width: 25rem;
-  font-size: clamp(3.25rem, 4.6vw, 5.1rem);
+  font-size: clamp(2.8rem, 4.2vw, 4.6rem);
   line-height: 0.96;
 }
 
@@ -2144,6 +2153,17 @@ select option {
   pointer-events: none;
 }
 
+.ai-intelligence-scene .operational-scene__content {
+  z-index: 12;
+}
+
+.ai-intelligence-scene #ai-page-title {
+  max-width: 27rem;
+  font-size: clamp(2.35rem, 4.5vw, 4.7rem);
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
 .ai-intelligence-scene .relationship-arc {
   z-index: 1;
 }
@@ -2275,10 +2295,34 @@ select option {
     padding: 1.25rem;
   }
 
+  .ai-intelligence-scene #ai-page-title {
+    max-width: 20rem;
+    font-size: clamp(2.2rem, 9vw, 3.7rem);
+  }
+
   .ai-intelligence-scene .signal-node {
     width: 7.5rem;
     min-height: 4.8rem;
     padding: 0.6rem;
+  }
+
+  .ai-intelligence-scene .operational-scene__spatial {
+    position: relative;
+    inset: auto;
+    display: grid;
+    order: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    min-height: auto;
+    padding: 1rem;
+  }
+
+  .ai-intelligence-scene .signal-node[data-floating="true"] {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    transform: none;
   }
 
   .ai-intelligence-scene .signal-node[data-size="core"] {
@@ -2298,13 +2342,43 @@ select option {
   .ai-intelligence-scene__inspector {
     position: relative;
     inset: auto;
-    width: 100%;
+    width: auto;
     margin: 0 1rem 1rem;
   }
 
-  .ai-command-rail,
+    .ai-command-rail,
+    .ai-workflow-panel {
+      grid-template-columns: 1fr;
+      min-width: 0;
+    }
+
+    .ai-command-reveal {
+      width: 100%;
+      min-width: 0;
+      overflow-x: clip;
+    }
+
+    .ai-workflow-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ai-workflow-grid > * {
+      min-width: 0;
+      width: 100%;
+    }
+
   .ai-workflow-panel {
-    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .ai-workflow-section {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ai-intelligence-scene .mt-6 {
+    min-width: 0;
   }
 
   .ai-command-rail .tabs-list {
@@ -2468,7 +2542,7 @@ select option {
 
 .incident-response-field__title {
   --editorial-max-width: 23rem;
-  font-size: clamp(3rem, 4.6vw, 5.2rem);
+  font-size: clamp(2.8rem, 4.2vw, 4.7rem);
   line-height: 0.94;
 }
 
@@ -3179,6 +3253,7 @@ select option {
   .operational-scene__content {
     order: 1;
     min-height: 36rem;
+    padding-right: var(--ops-space-scene);
   }
 
   .operational-scene__spatial {
@@ -3283,7 +3358,7 @@ select option {
   }
 
   .service-universe__title {
-    font-size: clamp(3rem, 12vw, 4.8rem);
+    font-size: clamp(2.7rem, 10vw, 4rem);
   }
 
   .service-universe__summary {
@@ -3361,7 +3436,7 @@ select option {
   }
 
   .incident-response-field__title {
-    font-size: clamp(3rem, 12vw, 4.8rem);
+    font-size: clamp(2.7rem, 10vw, 4rem);
   }
 
   .incident-response-field__summary {

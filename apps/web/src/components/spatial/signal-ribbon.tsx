@@ -61,7 +61,7 @@ export function SignalRibbon({
       role="img"
       style={style}
     >
-      <svg preserveAspectRatio="none" viewBox="0 0 100 100">
+      <svg preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100">
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="rgb(255 181 108 / 0.38)" />
