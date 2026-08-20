@@ -24,6 +24,7 @@ describe("visual foundation primitives", () => {
     expect(markup).toContain("Interactive operations.");
     expect(markup).toContain('data-size="hero"');
     expect(markup).toContain('data-width="wide"');
+    expect(markup).toContain('data-wrap="balanced"');
   });
 
   it("renders an operational scene with image and content layers", () => {
@@ -39,6 +40,7 @@ describe("visual foundation primitives", () => {
     expect(markup).toContain("reference-image-layer");
     expect(markup).toContain("Node layer");
     expect(markup).toContain("Scene content");
+    expect(markup).toContain('data-has-spatial="true"');
   });
 
   it("renders accessible selectable signal nodes", () => {
@@ -90,6 +92,7 @@ describe("visual foundation primitives", () => {
 
     expect(markup).toContain("P95 latency");
     expect(markup).toContain("signal-ribbon__line");
+    expect(markup).toContain('preserveAspectRatio="xMidYMid meet"');
   });
 
   it("renders threshold bands with state and limits", () => {
