@@ -26,6 +26,7 @@ import { createWorkflowTimelineEvent, loadIncidentOrThrow } from "./incident-wor
 export type CreateIncidentAttachmentCommand = CreateIncidentAttachmentRequest & {
   incidentId: string;
   actor: IncidentActor;
+  content?: Buffer;
 };
 
 @Injectable()
@@ -69,7 +70,18 @@ export class CreateIncidentAttachmentUseCase {
       createdAt: uploadedAt
     });
 
-    await this.attachmentRepository.save(attachment, { timelineEvents: [timelineEvent] });
+    if (command.content) {
+      await this.attachmentStorage.save(storageKey, command.content);
+    }
+
+    try {
+      await this.attachmentRepository.save(attachment, { timelineEvents: [timelineEvent] });
+    } catch (error) {
+      if (command.content) {
+        await this.attachmentStorage.remove(storageKey);
+      }
+      throw error;
+    }
     await this.auditLog.record({
       actorUserId: command.actor.id,
       action: "incident.attachment_added",

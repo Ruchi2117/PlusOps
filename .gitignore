@@ -28,6 +28,7 @@ Thumbs.db
 
 # Local dev server logs
 .plusops-dev/
+.plusops/
 
 # Prisma
 apps/api/prisma/migrations/dev/

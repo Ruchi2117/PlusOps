@@ -60,7 +60,7 @@ The current released backend includes production-oriented authentication, incide
 | `v0.2.0` | Released | Authentication backend, RBAC foundation, JWT, refresh token rotation |
 | `v0.3.0` | Released | Incident lifecycle operations, Prisma repositories, REST API, audit and timeline evidence |
 | `v0.4.0` | Released | Incident workflow engine, assignment, severity changes, status transitions, resolve, reopen, close |
-| `v0.5.0` | Released | Collaboration layer, comments, mentions, attachment metadata, read-only activity timeline |
+| `v0.5.0` | Released | Collaboration layer, comments, mentions, attachment records, read-only activity timeline |
 | `v0.6.0` | Released | Service catalog foundation, ownership metadata, environments, dependencies, deployments schema |
 | `v0.7.0` | Released | Service health checks, health evaluation, health history, simulated check runs |
 | `v0.8.0` | Released | Metrics foundation, metric definitions, labels, series, samples, retention references |
@@ -96,7 +96,7 @@ Suggested screenshots:
 - Incident domain model and state machine
 - Incident lifecycle backend: create, list, read detail, update details, soft delete
 - Incident workflow engine: assignment, status transitions, severity changes, resolve, reopen, close
-- Incident collaboration backend: comments, mentions, attachment metadata, read-only activity timeline
+- Incident collaboration backend: comments, mentions, local development file uploads, attachment records, read-only activity timeline
 - Incident timeline event persistence for lifecycle and workflow changes
 - Service catalog foundation: service ownership, metadata, lifecycle, visibility, environments, dependencies, and deployment records
 - Service catalog REST API with RBAC, soft archive, pagination, filtering, sorting, and Swagger metadata
@@ -112,7 +112,7 @@ Suggested screenshots:
 - AI copilots for chat, log analysis, stack trace explanation, incident summarization, SQL generation, API documentation, release notes, and playground experimentation
 - Frontend product shell with responsive navigation, command palette, notification drawer, dark mode, error boundaries, loading skeletons, toast notifications, and typed API integration
 - Dashboard UI backed by platform APIs with active incidents, critical alerts, service posture, metric trend cards, recent activity, AI suggestions, and recent deployments
-- Incident Management UI with list filters, pagination, detail view, timeline, comments, attachment metadata, and workflow controls
+- Incident Management UI with creation, list filters, pagination, detail view, timeline, comments, file upload/download, and workflow controls
 - Service Catalog UI with service list, service detail, dependencies, health summary, metrics summary, and deployment context
 - Observability UI for health checks, health history, metric querying with Recharts, alert rules, and simulated alert evaluation
 - AI Copilot UI with chat, conversation history, provider selector, usage statistics, playground, and engineering copilots

@@ -309,6 +309,7 @@ export function DashboardPage() {
         <MotionReveal className="dashboard-signal-floor__visual" delay={0.08} variant="slide">
           <SignalRibbon
             ariaLabel="Dashboard API latency signal"
+            height="clamp(16rem, 24vw, 22rem)"
             label={
               radar.latestLatencyMs === null
                 ? "No latency samples returned by the metrics query."

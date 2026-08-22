@@ -1,5 +1,14 @@
 import type { IncidentSeverity, IncidentStatus } from "@plusops/contracts";
-import { FilePlus2, MessageSquarePlus, Paperclip, SendHorizontal, UserRound } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  FilePlus2,
+  MessageSquarePlus,
+  Paperclip,
+  RotateCcw,
+  SendHorizontal,
+  UserRound
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 
@@ -22,15 +31,15 @@ import {
   useIncidentMutations
 } from "../platform/use-platform-data";
 
-const workflowStatuses: IncidentStatus[] = [
-  "open",
-  "investigating",
-  "identified",
-  "mitigated",
-  "monitoring",
-  "resolved",
-  "closed"
-];
+const regularStatusTransitions: Record<IncidentStatus, IncidentStatus[]> = {
+  open: ["investigating"],
+  investigating: ["identified"],
+  identified: ["mitigated", "investigating"],
+  mitigated: ["monitoring", "investigating"],
+  monitoring: ["investigating"],
+  resolved: [],
+  closed: []
+};
 
 const severities: IncidentSeverity[] = ["sev1", "sev2", "sev3", "sev4"];
 
@@ -41,7 +50,10 @@ export function IncidentDetailPage() {
   const attachmentsQuery = useIncidentAttachments(incidentId);
   const incidentMutations = useIncidentMutations(incidentId);
   const [comment, setComment] = useState("");
-  const [attachmentName, setAttachmentName] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentInputKey, setAttachmentInputKey] = useState(0);
+  const [resolutionSummary, setResolutionSummary] = useState("");
+  const [reopenReason, setReopenReason] = useState("");
 
   if (incidentQuery.isLoading) {
     return <IncidentDetailSkeleton />;
@@ -70,12 +82,15 @@ export function IncidentDetailPage() {
             <Button asChild variant="secondary">
               <Link to="/incidents">Back to queue</Link>
             </Button>
-            <Button
-              disabled={incidentMutations.changeStatus.isPending}
-              onClick={() => incidentMutations.changeStatus.mutate("resolved")}
-            >
-              Resolve
-            </Button>
+            {incident.status === "monitoring" ? (
+              <Button
+                disabled={incidentMutations.resolve.isPending}
+                onClick={() => incidentMutations.resolve.mutate(resolutionSummary.trim())}
+              >
+                <CheckCircle2 className="size-4" aria-hidden="true" />
+                Resolve
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -204,7 +219,7 @@ export function IncidentDetailPage() {
                   value={incident.status}
                   onChange={(event) => incidentMutations.changeStatus.mutate(event.target.value as IncidentStatus)}
                 >
-                  {workflowStatuses.map((status) => (
+                  {[incident.status, ...regularStatusTransitions[incident.status]].map((status) => (
                     <option key={status} value={status}>
                       {titleCase(status)}
                     </option>
@@ -224,20 +239,58 @@ export function IncidentDetailPage() {
                   ))}
                 </Select>
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => incidentMutations.changeStatus.mutate("monitoring")}
-                >
-                  Monitor
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => incidentMutations.changeStatus.mutate("closed")}
-                >
-                  Close
-                </Button>
-              </div>
+              {incident.status === "monitoring" ? (
+                <div className="space-y-2 border-t border-white/[0.08] pt-3">
+                  <FieldLabel htmlFor="resolution-summary">Resolution summary</FieldLabel>
+                  <Textarea
+                    id="resolution-summary"
+                    maxLength={1000}
+                    placeholder="What restored service and how was it verified?"
+                    value={resolutionSummary}
+                    onChange={(event) => setResolutionSummary(event.target.value)}
+                  />
+                  <Button
+                    disabled={incidentMutations.resolve.isPending}
+                    onClick={() => incidentMutations.resolve.mutate(resolutionSummary.trim())}
+                    type="button"
+                  >
+                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                    Resolve incident
+                  </Button>
+                </div>
+              ) : null}
+              {incident.status === "resolved" ? (
+                <div className="space-y-3 border-t border-white/[0.08] pt-3">
+                  <label className="space-y-1">
+                    <FieldLabel htmlFor="reopen-reason">Reason to reopen</FieldLabel>
+                    <Textarea
+                      id="reopen-reason"
+                      maxLength={1000}
+                      placeholder="What regressed?"
+                      value={reopenReason}
+                      onChange={(event) => setReopenReason(event.target.value)}
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      disabled={incidentMutations.reopen.isPending || !reopenReason.trim()}
+                      onClick={() => incidentMutations.reopen.mutate(reopenReason.trim())}
+                      type="button"
+                      variant="secondary"
+                    >
+                      <RotateCcw className="size-4" aria-hidden="true" />
+                      Reopen
+                    </Button>
+                    <Button
+                      disabled={incidentMutations.close.isPending}
+                      onClick={() => incidentMutations.close.mutate()}
+                      type="button"
+                    >
+                      Close incident
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -258,11 +311,28 @@ export function IncidentDetailPage() {
                 />
               ) : attachments.length ? (
                 attachments.map((attachment) => (
-                  <div key={attachment.id} className="ops-row p-3">
-                    <p className="text-sm font-medium">{attachment.filename}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {attachment.contentType} by {attachment.uploadedByName}
-                    </p>
+                  <div key={attachment.id} className="ops-row flex items-center justify-between gap-3 p-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{attachment.filename}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {attachment.contentType} / {formatNumber(attachment.size)} bytes / {attachment.uploadedByName}
+                      </p>
+                    </div>
+                    <Button
+                      aria-label={`Download ${attachment.filename}`}
+                      disabled={incidentMutations.downloadAttachment.isPending}
+                      onClick={() =>
+                        incidentMutations.downloadAttachment.mutate({
+                          attachmentId: attachment.id,
+                          filename: attachment.filename
+                        })
+                      }
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <Download className="size-4" aria-hidden="true" />
+                    </Button>
                   </div>
                 ))
               ) : (
@@ -272,35 +342,31 @@ export function IncidentDetailPage() {
                 className="space-y-2"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  if (!attachmentName.trim()) {
+                  if (!attachment) {
                     return;
                   }
-                  incidentMutations.addAttachment.mutate(
-                    {
-                      filename: attachmentName.trim(),
-                      contentType: "text/plain",
-                      size: 1024
-                    },
-                    {
-                      onSuccess: () => setAttachmentName("")
+                  incidentMutations.addAttachment.mutate(attachment, {
+                    onSuccess: () => {
+                      setAttachment(null);
+                      setAttachmentInputKey((value) => value + 1);
                     }
-                  );
+                  });
                 }}
               >
-                <FieldLabel htmlFor="attachment-name">Attachment metadata</FieldLabel>
+                <FieldLabel htmlFor="incident-attachment">Upload evidence</FieldLabel>
                 <Input
-                  id="attachment-name"
-                  placeholder="timeline-export.txt"
-                  value={attachmentName}
-                  onChange={(event) => setAttachmentName(event.target.value)}
+                  id="incident-attachment"
+                  key={attachmentInputKey}
+                  onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
+                  type="file"
                 />
                 <Button
-                  disabled={incidentMutations.addAttachment.isPending || !attachmentName.trim()}
+                  disabled={incidentMutations.addAttachment.isPending || !attachment}
                   type="submit"
                   variant="secondary"
                 >
                   <FilePlus2 className="size-4" aria-hidden="true" />
-                  Add metadata
+                  {incidentMutations.addAttachment.isPending ? "Uploading..." : "Upload file"}
                 </Button>
               </form>
             </CardContent>

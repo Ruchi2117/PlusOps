@@ -22,6 +22,7 @@ import {
   buildMetricInspectorItems,
   formatMetricValue,
   formatThreshold,
+  getMetricTrend,
   getThresholdScale,
   thresholdBandState
 } from "./metric-alert-model";
@@ -55,6 +56,7 @@ export function MetricsSignalField({
 }: MetricsSignalFieldProps) {
   const selectedAlert = relatedAlerts.find((alert) => alert.id === selectedAlertId) ?? relatedAlerts[0];
   const latestPoint = points.at(-1);
+  const trend = getMetricTrend(points);
   const thresholdScale = selectedAlert ? getThresholdScale(points, selectedAlert.condition.threshold) : null;
   const ribbonPoints = points.map((point) => ({
     label: formatDateTime(point.timestamp),
@@ -74,21 +76,6 @@ export function MetricsSignalField({
         opacity: 0.5,
         scale: 1.08
       }}
-      inspector={
-        <SceneInspector
-          className="metrics-signal-field__inspector"
-          items={buildMetricInspectorItems({
-            aggregation,
-            alert: selectedAlert,
-            metric,
-            points,
-            service,
-            timeRangeLabel
-          })}
-          subtitle={`${service?.name ?? "Service"} · ${titleCase(metric.type)}`}
-          title={metric.displayName}
-        />
-      }
       overlay="strong"
       spatialLayer={
         <>
@@ -144,7 +131,7 @@ export function MetricsSignalField({
           <SignalRibbon
             animated
             ariaLabel={`${metric.displayName} signal over ${timeRangeLabel}`}
-            height="15rem"
+            height="clamp(18rem, 26vw, 26rem)"
             label={`${points.length} real query points · ${timeRangeLabel}`}
             points={ribbonPoints}
           />
@@ -168,10 +155,53 @@ export function MetricsSignalField({
           />
         </MotionReveal>
       ) : (
-        <p className="metrics-signal-field__no-threshold">
-          No alert rule in the current API matches this metric signal.
-        </p>
+        <MotionReveal className="metrics-signal-field__readout" delay={0.14}>
+          <div className="metrics-signal-field__readout-heading">
+            <div>
+              <p className="art-eyebrow">Query readout</p>
+              <p>Live context for the signal shown above.</p>
+            </div>
+            <span>Unbound signal</span>
+          </div>
+          <dl className="metrics-signal-field__readout-grid">
+            <div>
+              <dt>Samples</dt>
+              <dd>{points.length}</dd>
+            </div>
+            <div>
+              <dt>Window</dt>
+              <dd>{timeRangeLabel}</dd>
+            </div>
+            <div>
+              <dt>Aggregation</dt>
+              <dd>{titleCase(aggregation)}</dd>
+            </div>
+            <div>
+              <dt>Signal trend</dt>
+              <dd>{titleCase(trend.direction)}</dd>
+              <small>{trend.label}</small>
+            </div>
+          </dl>
+          <div className="metrics-signal-field__readout-status">
+            <BellRing aria-hidden="true" />
+            <span>No alert rule currently targets this metric.</span>
+          </div>
+        </MotionReveal>
       )}
+
+      <SceneInspector
+        className="metrics-signal-field__inspector"
+        items={buildMetricInspectorItems({
+          aggregation,
+          alert: selectedAlert,
+          metric,
+          points,
+          service,
+          timeRangeLabel
+        })}
+        subtitle={`${service?.name ?? "Service"} · ${titleCase(metric.type)}`}
+        title={metric.displayName}
+      />
     </OperationalScene>
   );
 }

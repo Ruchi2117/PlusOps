@@ -385,8 +385,10 @@ Phase 5 transforms incident management from a lifecycle record into a collaborat
 - `GET /api/v1/incidents/:incidentId/comments` lists comments with pagination.
 - `PATCH /api/v1/comments/:commentId` edits a comment.
 - `DELETE /api/v1/comments/:commentId` soft deletes a comment.
-- `POST /api/v1/incidents/:incidentId/attachments` stores attachment metadata.
+- `POST /api/v1/incidents/:incidentId/attachments` stores attachment metadata for compatibility.
+- `POST /api/v1/incidents/:incidentId/attachments/upload` stores multipart file content through the attachment storage port.
 - `GET /api/v1/incidents/:incidentId/attachments` lists attachment metadata.
+- `GET /api/v1/attachments/:attachmentId/content` downloads stored attachment content.
 - `DELETE /api/v1/attachments/:attachmentId` soft deletes attachment metadata.
 - `GET /api/v1/incidents/:incidentId/timeline` returns the read-only activity feed.
 
@@ -398,7 +400,7 @@ Comments are human-authored discussion. They have authors, edit timestamps, soft
 
 Timeline events are immutable operational history. They record important facts such as incident creation, assignment changes, status changes, comment creation, comment edits, and attachment additions.
 
-Attachments are metadata-only evidence records. The system stores filename, content type, size, uploader, upload timestamp, and storage key. It does not store file bytes or integrate with S3 yet.
+Attachments are evidence records containing filename, content type, size, uploader, upload timestamp, and storage key. The local development adapter stores file bytes beneath `.plusops/uploads`; the application depends on a storage port so production S3 integration can replace the local adapter later.
 
 Mentions are stored separately from comments so future notification fan-out can read mention rows directly instead of reparsing comment bodies on every request.
 

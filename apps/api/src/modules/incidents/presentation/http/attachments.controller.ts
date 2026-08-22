@@ -1,11 +1,13 @@
 import {
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Inject,
   Param,
   ParseUUIDPipe,
+  StreamableFile,
   UseGuards
 } from "@nestjs/common";
 import {
@@ -26,6 +28,7 @@ import {
   RequirePermissions
 } from "../../../auth/presentation/http/guards/permissions.guard";
 import { DeleteIncidentAttachmentUseCase } from "../../application/use-cases/delete-incident-attachment.use-case";
+import { DownloadIncidentAttachmentUseCase } from "../../application/use-cases/download-incident-attachment.use-case";
 
 @ApiTags("Incident Collaboration")
 @ApiBearerAuth()
@@ -39,8 +42,28 @@ import { DeleteIncidentAttachmentUseCase } from "../../application/use-cases/del
 export class AttachmentsController {
   constructor(
     @Inject(DeleteIncidentAttachmentUseCase)
-    private readonly deleteIncidentAttachmentUseCase: DeleteIncidentAttachmentUseCase
+    private readonly deleteIncidentAttachmentUseCase: DeleteIncidentAttachmentUseCase,
+    @Inject(DownloadIncidentAttachmentUseCase)
+    private readonly downloadIncidentAttachmentUseCase: DownloadIncidentAttachmentUseCase
   ) {}
+
+  @Get(":attachmentId/content")
+  @RequirePermissions(SYSTEM_PERMISSIONS.INCIDENTS_READ)
+  @ApiNotFoundResponse({ description: "Incident attachment content could not be found." })
+  async download(
+    @Param("attachmentId", ParseUUIDPipe) attachmentId: string,
+    @CurrentUser() actor: AuthenticatedUser
+  ): Promise<StreamableFile> {
+    const attachment = await this.downloadIncidentAttachmentUseCase.execute({
+      attachmentId,
+      actor
+    });
+
+    return new StreamableFile(attachment.content, {
+      type: attachment.contentType,
+      disposition: `attachment; filename*=UTF-8''${encodeURIComponent(attachment.filename)}`
+    });
+  }
 
   @Delete(":attachmentId")
   @HttpCode(HttpStatus.NO_CONTENT)

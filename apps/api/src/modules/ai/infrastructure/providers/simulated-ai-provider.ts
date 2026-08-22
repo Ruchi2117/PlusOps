@@ -15,6 +15,8 @@ abstract class SimulatedAIProvider implements AIProviderPort {
   async generate(request: AIProviderRequest): Promise<AIProviderResponse> {
     const startedAt = Date.now();
     const relevantInput = request.userPrompt || request.messages.at(-1)?.content || "";
+    const framework = providerFrameworks[this.provider];
+    const guidance = featureGuidance(request.feature, relevantInput);
     const content = [
       `[Simulated ${this.provider} response]`,
       this.style,
@@ -24,10 +26,18 @@ abstract class SimulatedAIProvider implements AIProviderPort {
       "",
       summarizeInput(relevantInput),
       "",
-      "Recommended next steps:",
-      "- Validate the generated output with an engineer before applying it.",
-      "- Keep sensitive production data out of prompts until real provider controls exist.",
-      "- Treat this response as a deterministic placeholder for future provider integration."
+      `${framework.primary}:`,
+      ...guidance.primary.map((item) => `- ${item}`),
+      "",
+      `${framework.secondary}:`,
+      ...guidance.secondary.map((item) => `- ${item}`),
+      "",
+      `${framework.action}:`,
+      ...guidance.actions.map((item) => `- ${item}`),
+      "",
+      contextSummary(request.context),
+      "",
+      "Simulation boundary: this response is deterministic and does not call an external model."
     ].join("\n");
     const promptTokens = estimateTokens(
       [
@@ -51,6 +61,116 @@ abstract class SimulatedAIProvider implements AIProviderPort {
       }
     };
   }
+}
+
+const providerFrameworks = {
+  openai: {
+    primary: "Assessment",
+    secondary: "Evidence to verify",
+    action: "Next actions"
+  },
+  claude: {
+    primary: "Interpretation",
+    secondary: "Caveats and competing explanations",
+    action: "Verification plan"
+  },
+  gemini: {
+    primary: "Cross-system synthesis",
+    secondary: "Related signals",
+    action: "Comparison checks"
+  },
+  groq: {
+    primary: "Fast path",
+    secondary: "Immediate checks",
+    action: "Escalate when"
+  }
+} as const;
+
+function featureGuidance(
+  feature: AIProviderRequest["feature"],
+  input: string
+): { primary: string[]; secondary: string[]; actions: string[] } {
+  const signal = detectSignal(input);
+  const shared = {
+    primary: [`The request is centered on ${signal}.`, "Treat timing and scope as the first diagnostic dimensions."],
+    secondary: ["Correlate the signal with service health, recent changes, and active alerts."],
+    actions: ["Confirm the affected service and environment before changing production state."]
+  };
+
+  const byFeature: Record<AIProviderRequest["feature"], typeof shared> = {
+    chat: shared,
+    playground: {
+      primary: ["The supplied system and user prompts render successfully.", `The dominant signal is ${signal}.`],
+      secondary: ["Compare the output after changing provider, context, or prompt constraints."],
+      actions: ["Use an explicit expected format to make provider differences easier to evaluate."]
+    },
+    log_analysis: {
+      primary: [`The log sample suggests ${signal}.`, "Repeated timestamps or correlation IDs should define the failure window."],
+      secondary: ["A single error line is not enough to distinguish a dependency failure from local saturation."],
+      actions: ["Group by error signature, compare healthy traffic, then inspect the first upstream failure."]
+    },
+    stacktrace_explanation: {
+      primary: ["Read the stack from the first application frame, not the final wrapper error.", `The likely failure category is ${signal}.`],
+      secondary: ["Generated frames and framework internals can obscure the originating call site."],
+      actions: ["Locate the first owned frame, reproduce its input, and verify the boundary contract."]
+    },
+    incident_summarization: {
+      primary: [`The incident narrative currently points to ${signal}.`, "Separate observed impact from unverified cause."],
+      secondary: ["Timeline gaps and missing ownership can make a summary appear more certain than the evidence."],
+      actions: ["Record impact, current state, mitigation, owner, and the next decision deadline."]
+    },
+    sql_generation: {
+      primary: ["Build the query from an explicit grain and bounded time window.", `The requested analysis concerns ${signal}.`],
+      secondary: ["Schema names, joins, and index availability must be verified before execution."],
+      actions: ["Run EXPLAIN first, use parameters, and test against a read-only database role."]
+    },
+    api_documentation: {
+      primary: ["Document the request contract, response contract, authorization, and failure modes.", `The API context centers on ${signal}.`],
+      secondary: ["Examples should not imply behavior that validation or permissions do not support."],
+      actions: ["Verify examples against the generated OpenAPI document and a real request."]
+    },
+    release_notes: {
+      primary: ["Lead with user-visible behavior, then operational and migration impact.", `The change set emphasizes ${signal}.`],
+      secondary: ["Do not describe simulated or deferred capabilities as production integrations."],
+      actions: ["Call out validation evidence, compatibility notes, and known deferred work."]
+    }
+  };
+
+  return byFeature[feature];
+}
+
+function detectSignal(input: string): string {
+  const normalized = input.toLowerCase();
+
+  if (normalized.includes("queue") || normalized.includes("webhook")) {
+    return "queue growth or downstream consumer pressure";
+  }
+  if (normalized.includes("latency") || normalized.includes("timeout")) {
+    return "latency or dependency timeout behavior";
+  }
+  if (normalized.includes("database") || normalized.includes("sql")) {
+    return "database access and query behavior";
+  }
+  if (normalized.includes("error") || normalized.includes("exception")) {
+    return "an application error path";
+  }
+  if (normalized.includes("release") || normalized.includes("deploy")) {
+    return "a release or deployment change";
+  }
+
+  return "the supplied operational context";
+}
+
+function contextSummary(context: Record<string, unknown>): string {
+  const entries = Object.entries(context);
+  if (!entries.length) {
+    return "Context used: no structured operational context supplied.";
+  }
+
+  return `Context used: ${entries
+    .slice(0, 6)
+    .map(([key, value]) => `${key}=${String(value)}`)
+    .join(", ")}.`;
 }
 
 @Injectable()

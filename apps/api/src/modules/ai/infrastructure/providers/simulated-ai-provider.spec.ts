@@ -25,8 +25,45 @@ describe("simulated AI provider abstraction", () => {
     });
 
     expect(response.content).toContain("[Simulated openai response]");
+    expect(response.content).toContain("The log sample suggests");
+    expect(response.content).toContain("Assessment:");
     expect(response.metadata).toMatchObject({ simulated: true, provider: "openai" });
     expect(response.promptTokens + response.completionTokens).toBeGreaterThan(0);
+  });
+
+  it("makes provider behavior visibly distinct while preserving the common contract", async () => {
+    const request = {
+      feature: "chat" as const,
+      model: "simulated-plusops",
+      systemPrompt: "Help an incident responder.",
+      userPrompt: "Why is webhook queue depth increasing?",
+      messages: [],
+      context: { service: "Notifications", environment: "production" },
+      maxTokens: 4096,
+      temperature: 0.2
+    };
+    const openai = await new SimulatedOpenAIProvider().generate({
+      ...request,
+      provider: "openai"
+    });
+    const claude = await new SimulatedClaudeProvider().generate({
+      ...request,
+      provider: "claude"
+    });
+    const gemini = await new SimulatedGeminiProvider().generate({
+      ...request,
+      provider: "gemini"
+    });
+    const groq = await new SimulatedGroqProvider().generate({
+      ...request,
+      provider: "groq"
+    });
+
+    expect(openai.content).toContain("Assessment:");
+    expect(claude.content).toContain("Caveats and competing explanations:");
+    expect(gemini.content).toContain("Cross-system synthesis:");
+    expect(groq.content).toContain("Fast path:");
+    expect(new Set([openai.content, claude.content, gemini.content, groq.content]).size).toBe(4);
   });
 
   it("resolves all supported provider adapters by provider key", () => {

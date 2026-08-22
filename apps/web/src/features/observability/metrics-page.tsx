@@ -81,7 +81,7 @@ export function MetricsPage() {
   }, [relatedAlerts, selectedAlertId]);
 
   return (
-    <div className="metrics-experience space-y-10">
+    <div className="metrics-experience space-y-6">
       <MotionReveal className="observability-controls">
         <div className="observability-controls__heading">
           <Filter className="size-4 text-primary" aria-hidden="true" />

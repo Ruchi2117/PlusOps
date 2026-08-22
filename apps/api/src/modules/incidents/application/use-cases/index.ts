@@ -8,6 +8,7 @@ export * from "./create-incident.use-case";
 export * from "./delete-incident-attachment.use-case";
 export * from "./delete-incident-comment.use-case";
 export * from "./delete-incident.use-case";
+export * from "./download-incident-attachment.use-case";
 export * from "./get-incident.use-case";
 export * from "./list-incident-attachments.use-case";
 export * from "./list-incident-comments.use-case";

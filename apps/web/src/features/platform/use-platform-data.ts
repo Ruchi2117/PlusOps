@@ -12,6 +12,9 @@ import {
   addIncidentComment,
   changeIncidentSeverity,
   changeIncidentStatus,
+  closeIncident,
+  createIncident,
+  downloadIncidentAttachment,
   chatWithAI,
   evaluateAlert,
   getOperationalMetricWindow,
@@ -32,6 +35,8 @@ import {
   listServices,
   queryMetrics,
   refreshSession,
+  reopenIncident,
+  resolveIncident,
   runAIPlayground,
   runAITool,
   runHealthCheck
@@ -135,6 +140,22 @@ export function useIncidents(query: Partial<IncidentListQuery>) {
   });
 }
 
+export function useCreateIncident() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createIncident,
+    onSuccess: async () => {
+      toast.success("Incident created");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["incidents"] }),
+        queryClient.invalidateQueries({ queryKey: platformQueryKeys.dashboard })
+      ]);
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error))
+  });
+}
+
 export function useIncident(incidentId: string) {
   return useQuery({
     queryKey: platformQueryKeys.incident(incidentId),
@@ -184,6 +205,31 @@ export function useIncidentMutations(incidentId: string) {
       },
       onError: (error) => toast.error(getApiErrorMessage(error))
     }),
+    resolve: useMutation({
+      mutationFn: (resolutionSummary?: string) =>
+        resolveIncident(incidentId, { resolutionSummary: resolutionSummary || undefined }),
+      onSuccess: async () => {
+        toast.success("Incident resolved");
+        await invalidate();
+      },
+      onError: (error) => toast.error(getApiErrorMessage(error))
+    }),
+    reopen: useMutation({
+      mutationFn: (reason: string) => reopenIncident(incidentId, { reason }),
+      onSuccess: async () => {
+        toast.success("Incident reopened");
+        await invalidate();
+      },
+      onError: (error) => toast.error(getApiErrorMessage(error))
+    }),
+    close: useMutation({
+      mutationFn: () => closeIncident(incidentId),
+      onSuccess: async () => {
+        toast.success("Incident closed");
+        await invalidate();
+      },
+      onError: (error) => toast.error(getApiErrorMessage(error))
+    }),
     addComment: useMutation({
       mutationFn: (body: string) => addIncidentComment(incidentId, { body }),
       onSuccess: async () => {
@@ -193,12 +239,16 @@ export function useIncidentMutations(incidentId: string) {
       onError: (error) => toast.error(getApiErrorMessage(error))
     }),
     addAttachment: useMutation({
-      mutationFn: (input: { filename: string; contentType: string; size: number }) =>
-        addIncidentAttachment(incidentId, input),
+      mutationFn: (file: File) => addIncidentAttachment(incidentId, file),
       onSuccess: async () => {
-        toast.success("Attachment added");
+        toast.success("Attachment uploaded");
         await invalidate();
       },
+      onError: (error) => toast.error(getApiErrorMessage(error))
+    }),
+    downloadAttachment: useMutation({
+      mutationFn: ({ attachmentId, filename }: { attachmentId: string; filename: string }) =>
+        downloadIncidentAttachment(attachmentId, filename),
       onError: (error) => toast.error(getApiErrorMessage(error))
     })
   };

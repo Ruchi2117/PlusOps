@@ -8,7 +8,7 @@ import type {
   AIToolRequest,
   AlertEvaluationResponse,
   AlertListResponse,
-  CreateIncidentAttachmentRequest,
+  CreateIncidentRequest,
   CreateIncidentCommentRequest,
   IncidentAttachmentResponse,
   IncidentAttachmentsResponse,
@@ -18,6 +18,8 @@ import type {
   IncidentListResponse,
   IncidentSeverity,
   IncidentStatus,
+  ReopenIncidentRequest,
+  ResolveIncidentRequest,
   ListServicesQuery,
   LoginRequest,
   LoginResponse,
@@ -195,6 +197,11 @@ export function getIncident(incidentId: string) {
   );
 }
 
+export async function createIncident(body: CreateIncidentRequest) {
+  const response = await apiClient.post<IncidentDetailResponse>("/api/v1/incidents", body);
+  return response.data;
+}
+
 export function listIncidentAttachments(incidentId: string) {
   return readPlatformData<IncidentAttachmentsResponse>(
     apiClient.get(`/api/v1/incidents/${incidentId}/attachments`),
@@ -206,6 +213,29 @@ export async function changeIncidentStatus(incidentId: string, status: IncidentS
   const response = await apiClient.post<IncidentDetailResponse>(`/api/v1/incidents/${incidentId}/status`, {
     status
   });
+  return response.data;
+}
+
+export async function resolveIncident(incidentId: string, body: ResolveIncidentRequest) {
+  const response = await apiClient.post<IncidentDetailResponse>(
+    `/api/v1/incidents/${incidentId}/resolve`,
+    body
+  );
+  return response.data;
+}
+
+export async function reopenIncident(incidentId: string, body: ReopenIncidentRequest) {
+  const response = await apiClient.post<IncidentDetailResponse>(
+    `/api/v1/incidents/${incidentId}/reopen`,
+    body
+  );
+  return response.data;
+}
+
+export async function closeIncident(incidentId: string) {
+  const response = await apiClient.post<IncidentDetailResponse>(
+    `/api/v1/incidents/${incidentId}/close`
+  );
   return response.data;
 }
 
@@ -224,15 +254,26 @@ export async function addIncidentComment(incidentId: string, body: CreateInciden
   return response.data;
 }
 
-export async function addIncidentAttachment(
-  incidentId: string,
-  body: CreateIncidentAttachmentRequest
-) {
+export async function addIncidentAttachment(incidentId: string, body: File) {
+  const formData = new FormData();
+  formData.append("file", body);
   const response = await apiClient.post<IncidentAttachmentResponse>(
-    `/api/v1/incidents/${incidentId}/attachments`,
-    body
+    `/api/v1/incidents/${incidentId}/attachments/upload`,
+    formData
   );
   return response.data;
+}
+
+export async function downloadIncidentAttachment(attachmentId: string, filename: string) {
+  const response = await apiClient.get<Blob>(`/api/v1/attachments/${attachmentId}/content`, {
+    responseType: "blob"
+  });
+  const url = URL.createObjectURL(response.data);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 export function listServices(query: Partial<ListServicesQuery> = {}) {

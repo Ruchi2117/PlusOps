@@ -230,11 +230,12 @@ describe("Incident collaboration use cases", () => {
     );
   });
 
-  it("creates attachment metadata with storage keys, timeline evidence, and audit logs", async () => {
+  it("persists attachment content with metadata, timeline evidence, and audit logs", async () => {
+    const attachmentStorage = new FakeAttachmentStorage();
     const useCase = new CreateIncidentAttachmentUseCase(
       incidentRepository,
       attachmentRepository,
-      new FakeAttachmentStorage(),
+      attachmentStorage,
       auditLog,
       clock
     );
@@ -243,7 +244,8 @@ describe("Incident collaboration use cases", () => {
       incidentId: incidentId(),
       filename: "checkout-errors.json",
       contentType: "application/json",
-      size: 2048,
+      size: 2,
+      content: Buffer.from("{}"),
       actor: developerActor()
     });
 
@@ -251,6 +253,10 @@ describe("Incident collaboration use cases", () => {
       filename: "checkout-errors.json",
       storageKey: expect.stringContaining("/attachments/")
     });
+    expect(attachmentStorage.save).toHaveBeenCalledWith(
+      result.attachment.storageKey,
+      Buffer.from("{}")
+    );
     expect(attachmentRepository.timelineEvents[0]?.toSnapshot()).toMatchObject({
       type: "attachment_added",
       metadata: {
@@ -383,9 +389,21 @@ class FakeTimelineRepository implements IncidentTimelineRepositoryPort {
 }
 
 class FakeAttachmentStorage implements IncidentAttachmentStoragePort {
+  readonly files = new Map<string, Buffer>();
+
   createStorageKey(input: { incidentId: string; attachmentId: string; filename: string }): string {
     return `incidents/${input.incidentId}/attachments/${input.attachmentId}/${input.filename}`;
   }
+
+  save = vi.fn(async (storageKey: string, content: Buffer) => {
+    this.files.set(storageKey, content);
+  });
+
+  read = vi.fn(async (storageKey: string) => this.files.get(storageKey) ?? Buffer.alloc(0));
+
+  remove = vi.fn(async (storageKey: string) => {
+    this.files.delete(storageKey);
+  });
 }
 
 class FakeAuditLog implements AuthAuditLogPort {

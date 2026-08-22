@@ -255,7 +255,7 @@ flowchart TD
   UseCase --> Attachments["Attachment Port"]
 ```
 
-The current incident module exposes lifecycle endpoints for create, list, detail read, detail update, soft delete, explicit workflow commands, comments, mentions, attachment metadata, and a read-only activity timeline. Prisma remains isolated in infrastructure repositories, while use cases enforce RBAC, ownership-aware rules, audit logging, and timeline event generation. Notifications, monitoring ingestion, realtime updates, dashboard integration, and S3-backed attachment storage are intentionally deferred.
+The current incident module exposes lifecycle endpoints for create, list, detail read, detail update, soft delete, explicit workflow commands, comments, mentions, local development file upload/download, attachment metadata, and a read-only activity timeline. Prisma remains isolated in infrastructure repositories, while use cases enforce RBAC, ownership-aware rules, audit logging, and timeline event generation. File bytes are kept behind a storage port and written beneath `.plusops/uploads` by the local adapter; production object storage such as S3 remains intentionally deferred.
 
 ### Incident Lifecycle and Workflow Flow
 

@@ -10,7 +10,7 @@ Implemented frontend surfaces:
 
 - Dashboard
 - Incident Management
-- Incident detail, timeline, comments, attachment metadata, and workflow actions
+- Incident creation, detail, timeline, comments, file upload/download, and workflow actions
 - Service Catalog
 - Service detail, dependencies, health summary, metrics summary, and deployments
 - Health checks and health history

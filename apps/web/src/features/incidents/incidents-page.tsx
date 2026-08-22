@@ -1,17 +1,27 @@
-import type { IncidentPriority, IncidentSeverity, IncidentStatus } from "@plusops/contracts";
-import { ArrowRight, Filter, Plus, Search } from "lucide-react";
+import {
+  createIncidentRequestSchema,
+  type IncidentPriority,
+  type IncidentSeverity,
+  type IncidentStatus
+} from "@plusops/contracts";
+import { ArrowRight, Filter, Plus, Search, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { MotionReveal } from "../../components/spatial";
 import { Button } from "../../components/ui/button";
 import { EmptyState, ErrorState, RetryButton } from "../../components/ui/data-state";
-import { FieldLabel, Input, Select } from "../../components/ui/form-controls";
+import { FieldLabel, Input, Select, Textarea } from "../../components/ui/form-controls";
 import { IncidentSeverityBadge, IncidentStatusBadge, PriorityBadge } from "../../components/ui/status-badge";
 import { Skeleton } from "../../components/ui/skeleton";
 import { formatDateTime, formatNumber, titleCase } from "../../lib/format";
-import { useIncident, useIncidents, useServices } from "../platform/use-platform-data";
+import {
+  useCreateIncident,
+  useIncident,
+  useIncidents,
+  useServices
+} from "../platform/use-platform-data";
 import { IncidentResponseField } from "./incident-response-field";
 
 const statuses: Array<IncidentStatus | "all"> = [
@@ -29,6 +39,7 @@ const severities: Array<IncidentSeverity | "all"> = ["all", "sev1", "sev2", "sev
 const priorities: Array<IncidentPriority | "all"> = ["all", "urgent", "high", "medium", "low"];
 
 export function IncidentsPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<IncidentStatus | "all">("all");
   const [severity, setSeverity] = useState<IncidentSeverity | "all">("all");
@@ -37,6 +48,16 @@ export function IncidentsPage() {
   const [assigneeId, setAssigneeId] = useState("all");
   const [page, setPage] = useState(1);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [showCreateIncident, setShowCreateIncident] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [newIncident, setNewIncident] = useState({
+    title: "",
+    description: "",
+    customerImpact: "",
+    serviceId: "",
+    severity: "sev2" as IncidentSeverity,
+    priority: "high" as IncidentPriority
+  });
 
   const query = useMemo(
     () => ({
@@ -61,6 +82,7 @@ export function IncidentsPage() {
   });
   const incidentsQuery = useIncidents(query);
   const servicesQuery = useServices();
+  const createIncidentMutation = useCreateIncident();
   const incidents = incidentsQuery.data?.data ?? [];
   const pagination = incidentsQuery.data?.pagination;
   const selectedIncident = selectedIncidentId
@@ -126,13 +148,171 @@ export function IncidentsPage() {
               <Filter className="size-4" aria-hidden="true" />
               {formatNumber(incidentsQuery.data?.pagination.total ?? 0)} in this view
             </span>
-            <Button>
+            <Button
+              aria-expanded={showCreateIncident}
+              onClick={() => setShowCreateIncident((value) => !value)}
+            >
               <Plus className="size-4" aria-hidden="true" />
               Create incident
             </Button>
           </div>
         </section>
       </MotionReveal>
+
+      {showCreateIncident ? (
+        <MotionReveal>
+          <section className="ops-row p-5" aria-labelledby="create-incident-title">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="art-eyebrow">New operational event</p>
+                <h2 id="create-incident-title" className="mt-2 text-2xl font-semibold">
+                  Create incident
+                </h2>
+              </div>
+              <Button
+                aria-label="Close incident form"
+                onClick={() => setShowCreateIncident(false)}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </Button>
+            </div>
+            <form
+              className="grid gap-4 lg:grid-cols-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const parsed = createIncidentRequestSchema.safeParse({
+                  ...newIncident,
+                  description: newIncident.description || undefined,
+                  customerImpact: newIncident.customerImpact || undefined
+                });
+
+                if (!parsed.success) {
+                  setCreateError(parsed.error.issues[0]?.message ?? "Check the incident details.");
+                  return;
+                }
+
+                setCreateError("");
+                createIncidentMutation.mutate(parsed.data, {
+                  onSuccess: (response) => void navigate(`/incidents/${response.incident.id}`)
+                });
+              }}
+            >
+              <label className="space-y-1 lg:col-span-2">
+                <FieldLabel htmlFor="incident-title">Title</FieldLabel>
+                <Input
+                  id="incident-title"
+                  maxLength={160}
+                  required
+                  value={newIncident.title}
+                  onChange={(event) =>
+                    setNewIncident((value) => ({ ...value, title: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="space-y-1">
+                <FieldLabel htmlFor="incident-service">Affected service</FieldLabel>
+                <Select
+                  id="incident-service"
+                  required
+                  value={newIncident.serviceId}
+                  onChange={(event) =>
+                    setNewIncident((value) => ({ ...value, serviceId: event.target.value }))
+                  }
+                >
+                  <option value="">Select a service</option>
+                  {serviceOptions.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="space-y-1">
+                  <FieldLabel htmlFor="incident-severity">Severity</FieldLabel>
+                  <Select
+                    id="incident-severity"
+                    value={newIncident.severity}
+                    onChange={(event) =>
+                      setNewIncident((value) => ({
+                        ...value,
+                        severity: event.target.value as IncidentSeverity
+                      }))
+                    }
+                  >
+                    {severities.slice(1).map((item) => (
+                      <option key={item} value={item}>
+                        {item.toUpperCase()}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+                <label className="space-y-1">
+                  <FieldLabel htmlFor="incident-priority">Priority</FieldLabel>
+                  <Select
+                    id="incident-priority"
+                    value={newIncident.priority}
+                    onChange={(event) =>
+                      setNewIncident((value) => ({
+                        ...value,
+                        priority: event.target.value as IncidentPriority
+                      }))
+                    }
+                  >
+                    {priorities.slice(1).map((item) => (
+                      <option key={item} value={item}>
+                        {titleCase(item)}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+              </div>
+              <label className="space-y-1 lg:col-span-2">
+                <FieldLabel htmlFor="incident-description">Description</FieldLabel>
+                <Textarea
+                  id="incident-description"
+                  maxLength={5000}
+                  value={newIncident.description}
+                  onChange={(event) =>
+                    setNewIncident((value) => ({ ...value, description: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="space-y-1 lg:col-span-2">
+                <FieldLabel htmlFor="incident-impact">Customer impact</FieldLabel>
+                <Textarea
+                  id="incident-impact"
+                  maxLength={1000}
+                  value={newIncident.customerImpact}
+                  onChange={(event) =>
+                    setNewIncident((value) => ({ ...value, customerImpact: event.target.value }))
+                  }
+                />
+              </label>
+              {createError ? (
+                <p className="text-sm text-destructive lg:col-span-2" role="alert">
+                  {createError}
+                </p>
+              ) : null}
+              <div className="flex gap-2 lg:col-span-2">
+                <Button disabled={createIncidentMutation.isPending} type="submit">
+                  {createIncidentMutation.isPending ? "Creating..." : "Create incident"}
+                </Button>
+                <Button
+                  onClick={() => setShowCreateIncident(false)}
+                  type="button"
+                  variant="secondary"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </section>
+        </MotionReveal>
+      ) : null}
 
       <MotionReveal>
         <section className="incident-response-filters" aria-label="Filter incidents">

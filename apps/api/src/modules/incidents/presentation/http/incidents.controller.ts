@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -13,11 +14,13 @@ import {
   Query,
   UseGuards
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
+  ApiConsumes,
   ApiExtraModels,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -26,6 +29,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse
 } from "@nestjs/swagger";
+import { UploadedFile, UseInterceptors } from "@nestjs/common";
 import type {
   IncidentAttachmentResponse,
   IncidentAttachmentsResponse,
@@ -371,6 +375,31 @@ export class IncidentsController {
     });
   }
 
+  @Post(":incidentId/attachments/upload")
+  @RequirePermissions(SYSTEM_PERMISSIONS.INCIDENTS_WRITE)
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 50_000_000 } }))
+  @ApiConsumes("multipart/form-data")
+  @ApiCreatedResponse({ description: "Incident attachment uploaded." })
+  @ApiBadRequestResponse({ description: "A valid attachment file is required." })
+  async uploadAttachment(
+    @Param("incidentId", ParseUUIDPipe) incidentId: string,
+    @UploadedFile() file: UploadedIncidentFile | undefined,
+    @CurrentUser() actor: AuthenticatedUser
+  ): Promise<IncidentAttachmentResponse> {
+    if (!file) {
+      throw new BadRequestException("Attachment file is required.");
+    }
+
+    return this.createIncidentAttachmentUseCase.execute({
+      incidentId,
+      filename: file.originalname,
+      contentType: file.mimetype || "application/octet-stream",
+      size: file.size,
+      content: file.buffer,
+      actor
+    });
+  }
+
   @Get(":incidentId/attachments")
   @RequirePermissions(SYSTEM_PERMISSIONS.INCIDENTS_READ)
   @ApiOkResponse({ description: "Incident attachments returned." })
@@ -408,3 +437,10 @@ export class IncidentsController {
     });
   }
 }
+
+type UploadedIncidentFile = {
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+};

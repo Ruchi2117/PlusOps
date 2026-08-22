@@ -93,10 +93,10 @@ const workflowPrompts: Record<Workflow, string> = {
 };
 
 const nodePositions = [
-  { x: 17, y: 23 },
-  { x: 82, y: 22 },
-  { x: 17, y: 73 },
-  { x: 82, y: 73 }
+  { x: 25, y: 22 },
+  { x: 75, y: 22 },
+  { x: 25, y: 78 },
+  { x: 75, y: 78 }
 ];
 
 export function AICopilotPage() {
@@ -234,10 +234,10 @@ export function AICopilotPage() {
           overlay="strong"
           spatialLayer={
             <>
-              <RelationshipArc from={{ x: 50, y: 50 }} to={{ x: 17, y: 23 }} label="AI context to operational signal" />
-              <RelationshipArc from={{ x: 50, y: 50 }} to={{ x: 82, y: 22 }} tone="danger" />
-              <RelationshipArc from={{ x: 50, y: 50 }} to={{ x: 17, y: 73 }} tone="muted" />
-              <RelationshipArc from={{ x: 50, y: 50 }} to={{ x: 82, y: 73 }} />
+              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[0]!} label="AI context to operational signal" />
+              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[1]!} tone="danger" />
+              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[2]!} tone="muted" />
+              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[3]!} />
               {contextNodes.map((node) => (
                 <SignalNode
                   key={node.id}
@@ -303,7 +303,7 @@ export function AICopilotPage() {
             <div className="max-w-xl">
               <p className="art-eyebrow">AI intelligence layer</p>
               <h1 id="ai-page-title" className="mt-5 text-[clamp(2.6rem,5vw,5.4rem)] font-black leading-[0.9] text-white">
-                Understand the
+                Understand the{" "}
                 <br />
                 system around you.
               </h1>
