@@ -17,21 +17,19 @@ import {
   Gauge,
   HeartPulse,
   Server,
-  ShieldAlert,
-  Sparkles
+  ShieldAlert
 } from "lucide-react";
-import { useState } from "react";
 import { Link } from "react-router";
 
 import {
-  MotionReveal,
-  OperationalScene,
-  RelationshipArc,
-  ResponsiveEditorialTitle,
-  SceneInspector,
-  SignalNode,
-  SignalRibbon
+  GlassOrbit,
+  MotionReveal
 } from "../../components/spatial";
+import {
+  SystemField,
+  type SystemFieldConnection,
+  type SystemFieldNode
+} from "../../components/spatial/system-field";
 import type {
   SceneInspectorItem,
   SignalNodeKind,
@@ -39,10 +37,13 @@ import type {
   SignalNodeSize,
   SignalNodeStatus
 } from "../../components/spatial";
-import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { ErrorState, RetryButton } from "../../components/ui/data-state";
 import { Skeleton } from "../../components/ui/skeleton";
+import {
+  IncidentSeverityBadge,
+  IncidentStatusBadge
+} from "../../components/ui/status-badge";
 import { formatDateTime, formatNumber, titleCase } from "../../lib/format";
 import { visualAssets } from "../../lib/visual-assets";
 import { useDashboardData } from "../platform/use-platform-data";
@@ -97,9 +98,14 @@ type DashboardRadarModel = {
   serviceHealthScore: number;
 };
 
+const metricWave = [
+  "M 4 58 C 18 32, 31 78, 45 48 S 72 22, 96 46",
+  "M 3 72 C 21 66, 28 35, 43 52 S 66 82, 96 28",
+  "M 4 44 C 18 54, 24 22, 42 31 S 72 58, 96 34"
+];
+
 export function DashboardPage() {
   const dashboardQuery = useDashboardData();
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   if (dashboardQuery.isLoading) {
     return <DashboardSkeleton />;
@@ -118,6 +124,7 @@ export function DashboardPage() {
   const { incidents, services, metrics, alerts, providers, metricQuery, health, dependencies } =
     dashboardQuery.data;
   const activeIncidents = incidents.data.filter((incident) => isActiveIncident(incident.status));
+  const storyIncidents = sortOperationalStoryFirst(activeIncidents);
   const radar = buildDashboardRadar({
     activeIncidents,
     alerts: alerts.data,
@@ -128,113 +135,49 @@ export function DashboardPage() {
     providers: providers.data,
     services: services.data
   });
-  const selectedNode = selectedNodeId
-    ? radar.nodes.find((node) => node.id === selectedNodeId)
-    : undefined;
   const firingAlert = radar.criticalAlerts[0];
   const topIncident = sortOperationalStoryFirst(activeIncidents)[0];
+  const topService =
+    services.data.find((service) => serviceRole(service) === "payments") ??
+    services.data.find((service) => service.id === topIncident?.serviceId) ??
+    services.data[0];
+  const systemNodes = buildClassicSystemNodes({
+    activeIncidents: activeIncidents.length,
+    criticalAlerts: radar.criticalAlerts.length,
+    enabledProviders: radar.enabledProviders.length,
+    latestLatencyMs: radar.latestLatencyMs,
+    serviceHealth: radar.serviceHealthScore,
+    topIncident,
+    topService
+  });
 
   return (
     <div className="space-y-16">
-      <OperationalScene
-        aria-label="Dashboard operational radar"
-        className="dashboard-radar"
-        contentClassName="dashboard-radar__content"
-        height="full"
-        image={{
-          focalPoint: "center",
-          motion: "slow-drift",
-          opacity: 0.62,
-          scale: 1.06,
-          src: visualAssets.architecturalGate
-        }}
-        inspector={
-          selectedNode ? (
-            <SceneInspector
-              className="dashboard-radar__inspector"
-              items={selectedNode.inspectorItems}
-              subtitle={selectedNode.subtitle}
-              title={selectedNode.label}
-            />
-          ) : null
-        }
-        overlay={radar.criticalAlerts.length > 0 ? "strong" : "soft"}
-        spatialLayer={
-          <>
-            {radar.arcs.map((arc) => {
-              const fromNode = radar.nodes.find((node) => node.id === arc.fromId);
-              const toNode = radar.nodes.find((node) => node.id === arc.toId);
-
-              if (!fromNode || !toNode) {
-                return null;
-              }
-
-              const active = selectedNode ? isArcActive(arc, selectedNode) : arc.activeByDefault;
-
-              return (
-                <RelationshipArc
-                  active={active}
-                  animated={Boolean(arc.animated && active)}
-                  curve={arc.curve}
-                  directional={arc.directional}
-                  from={{ x: fromNode.x, y: fromNode.y }}
-                  key={`${arc.fromId}-${arc.toId}-${arc.label}`}
-                  label={arc.label}
-                  to={{ x: toNode.x, y: toNode.y }}
-                  tone={arc.tone}
-                />
-              );
-            })}
-            {radar.nodes.map((node) => (
-              <SignalNode
-                ariaLabel={`${node.label}, ${node.status ?? "operational signal"}${node.value ? `, ${node.value}` : ""}`}
-                glow={node.glow}
-                icon={node.icon}
-                key={node.id}
-                kind={node.kind}
-                label={node.label}
-                meta={node.meta}
-                onSelect={() => setSelectedNodeId(node.id)}
-                selected={selectedNode?.id === node.id}
-                severity={node.severity}
-                size={node.size}
-                status={node.status}
-                value={node.value}
-                x={node.x}
-                y={node.y}
-              />
-            ))}
-          </>
-        }
-        tone={radar.criticalAlerts.length > 0 ? "danger" : "default"}
-      >
-        <MotionReveal className="max-w-[44rem]">
-          <Badge variant={radar.criticalAlerts.length > 0 ? "danger" : "success"}>
-            Live production radar
-          </Badge>
-          <ResponsiveEditorialTitle
-            className="dashboard-radar__title mt-6"
-            eyebrow="Dashboard / operational radar"
-            size="hero"
-            width="normal"
-          >
-            Engineering operations, without noise.
-          </ResponsiveEditorialTitle>
-          <p className="mt-6 max-w-xl text-sm leading-7 text-white/72">
-            Services, dependencies, health, metrics, alerts, incidents, and AI context are projected
-            from the same live backend data.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild>
-              <Link to="/incidents">Triage incidents</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link to="/services">Explore services</Link>
-            </Button>
+      <section className="dashboard-control-room" aria-labelledby="dashboard-control-room-title">
+        <MotionReveal className="dashboard-control-room__intro">
+          <div>
+            <p className="art-eyebrow">Dashboard / interactive system</p>
+            <h1 className="dashboard-control-room__title" id="dashboard-control-room-title">
+              Move through the control room.
+            </h1>
           </div>
+          <p>
+            Follow the live operational story from service health through latency, alerts, incidents,
+            and AI context. Focus any signal to illuminate its relationships.
+          </p>
         </MotionReveal>
 
-        <MotionReveal className="dashboard-radar__summary" delay={0.08} variant="slide">
+        <MotionReveal delay={0.08}>
+          <SystemField
+            backgroundImage={visualAssets.lightSail}
+            className="dashboard-control-room__field"
+            connections={buildClassicSystemConnections(systemNodes)}
+            nodes={systemNodes}
+            variant="sail"
+          />
+        </MotionReveal>
+
+        <MotionReveal className="dashboard-control-room__summary" delay={0.12} variant="slide">
           <DashboardSummaryValue
             label="Active incidents"
             tone={activeIncidents.length > 0 ? "warning" : "success"}
@@ -260,104 +203,127 @@ export function DashboardPage() {
             }
           />
         </MotionReveal>
-      </OperationalScene>
-
-      <section className="dashboard-activity-strip" aria-label="Recent operational activity">
-        <MotionReveal className="dashboard-activity-strip__header">
-          <div>
-            <p className="art-eyebrow">Current turn</p>
-            <h2 className="dashboard-section-title">Operational story from live data.</h2>
-          </div>
-          <p className="max-w-lg text-sm leading-6 text-muted-foreground">
-            Payments and checkout signals are intentionally connected: dependency latency rises,
-            health degrades, alerts fire, and incident response starts.
-          </p>
-        </MotionReveal>
-        <MotionReveal className="dashboard-activity-strip__items" delay={0.08} variant="slide">
-          {radar.activity.map((item) =>
-            item.href ? (
-              <Link
-                className="dashboard-activity-strip__item"
-                data-tone={item.tone}
-                key={`${item.label}-${item.title}`}
-                to={item.href}
-              >
-                <ActivityItemContent item={item} />
-              </Link>
-            ) : (
-              <div
-                className="dashboard-activity-strip__item"
-                data-tone={item.tone}
-                key={`${item.label}-${item.title}`}
-              >
-                <ActivityItemContent item={item} />
-              </div>
-            )
-          )}
-        </MotionReveal>
       </section>
 
-      <section className="dashboard-signal-floor">
-        <MotionReveal className="dashboard-signal-floor__copy">
-          <p className="art-eyebrow">Metric signal</p>
-          <h2 className="dashboard-section-title">Latency moves before the incident gets quiet.</h2>
-          <p className="mt-5 max-w-xl text-sm leading-7 text-muted-foreground">
-            The ribbon uses the dashboard metric query response directly. The latest value is the
-            same value shown in the radar and inspector.
-          </p>
-        </MotionReveal>
-        <MotionReveal className="dashboard-signal-floor__visual" delay={0.08} variant="slide">
-          <SignalRibbon
-            ariaLabel="Dashboard API latency signal"
-            height="clamp(16rem, 24vw, 22rem)"
-            label={
-              radar.latestLatencyMs === null
-                ? "No latency samples returned by the metrics query."
-                : `Latest latency sample: ${formatNumber(radar.latestLatencyMs, {
-                    maximumFractionDigits: 0
-                  })}ms`
-            }
-            points={radar.metricPoints}
+      <section className="dashboard-story-grid" aria-label="Current operational story">
+        <MotionReveal className="dashboard-incident-field">
+          <img
+            alt="People moving through an amber architectural corridor"
+            className="dashboard-story-image"
+            src={visualAssets.redPanelCorridor}
           />
+          <div className="dashboard-story-shade" />
+          <div className="dashboard-incident-field__content">
+            <div>
+              <p className="art-eyebrow">Section 02 / what is happening?</p>
+              <h2 className="dashboard-story-title">Incident field</h2>
+            </div>
+            <div className="dashboard-incident-list">
+              {storyIncidents.length > 0 ? (
+                storyIncidents.slice(0, 3).map((incident) => (
+                  <Link
+                    className="dashboard-incident-row"
+                    key={incident.id}
+                    to={`/incidents/${incident.id}`}
+                  >
+                    <div className="dashboard-incident-row__badges">
+                      <IncidentSeverityBadge severity={incident.severity} />
+                      <IncidentStatusBadge status={incident.status} />
+                    </div>
+                    <strong>{incident.title}</strong>
+                    <span>
+                      {incident.serviceName} / updated {formatDateTime(incident.updatedAt)}
+                    </span>
+                  </Link>
+                ))
+              ) : (
+                <div className="dashboard-incident-row dashboard-incident-row--empty">
+                  <strong>No active incidents</strong>
+                  <span>The operational field is currently clear.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </MotionReveal>
+
+        <MotionReveal className="dashboard-story-stack" delay={0.08} variant="slide">
+          <section className="dashboard-health-feature">
+            <img
+              alt="Warm concentric light forming an orbital health field"
+              className="dashboard-story-image"
+              src={visualAssets.orangeOrbit}
+            />
+            <div className="dashboard-story-shade dashboard-story-shade--soft" />
+            <GlassOrbit className="dashboard-health-feature__orbit" />
+            <div className="dashboard-health-feature__content">
+              <p className="art-eyebrow">Section 03 / what is healthy?</p>
+              <p className="dashboard-health-feature__value">{radar.serviceHealthScore}%</p>
+              <p>
+                Service health across {formatNumber(health.length)} live service evaluations.
+              </p>
+            </div>
+          </section>
+
+          <section className="dashboard-metric-feature">
+            <div>
+              <p className="art-eyebrow">Section 04 / what is changing?</p>
+              <p className="dashboard-metric-feature__value">
+                {radar.latestLatencyMs === null
+                  ? "n/a"
+                  : formatNumber(radar.latestLatencyMs, { maximumFractionDigits: 0 })}
+              </p>
+              <p className="dashboard-metric-feature__unit">ms p95</p>
+            </div>
+            <svg
+              aria-label="Animated API latency signal"
+              className="dashboard-metric-feature__wave"
+              preserveAspectRatio="none"
+              role="img"
+              viewBox="0 0 100 100"
+            >
+              {metricWave.map((path, index) => (
+                <path
+                  className="spatial-wave"
+                  d={path}
+                  key={path}
+                  style={{ animationDelay: `${index * -1.7}s` }}
+                />
+              ))}
+            </svg>
+          </section>
         </MotionReveal>
       </section>
 
-      <section className="dashboard-response-panel">
-        <MotionReveal className="dashboard-response-panel__copy">
-          <p className="art-eyebrow">Ask the system</p>
-          <ResponsiveEditorialTitle as="h2" size="section" width="tight">
-            Bring context into the response.
-          </ResponsiveEditorialTitle>
-        </MotionReveal>
-        <MotionReveal className="dashboard-response-panel__body" delay={0.08} variant="slide">
-          <div className="dashboard-response-panel__line">
-            <Sparkles className="size-4 text-primary" aria-hidden="true" />
-            <p>
-              {radar.enabledProviders.length} simulated AI providers can read the same service,
-              incident, alert, and metric context.
-            </p>
+      <MotionReveal className="dashboard-ask-system">
+        <img
+          alt="Warm architectural panels illuminated across a wide space"
+          className="dashboard-story-image"
+          src={visualAssets.colorArchitecture}
+        />
+        <div className="dashboard-story-shade dashboard-story-shade--ask" />
+        <div className="dashboard-ask-system__content">
+          <div>
+            <p className="art-eyebrow">Section 05 / ask the system</p>
+            <h2 className="dashboard-ask-system__title">Ask the system.</h2>
+            <Button asChild className="mt-8">
+              <Link to="/ai">Open AI Copilot</Link>
+            </Button>
           </div>
-          <div className="dashboard-response-panel__line">
-            <ShieldAlert className="size-4 text-primary" aria-hidden="true" />
-            <p>
-              {firingAlert
-                ? `${firingAlert.name} is currently ${firingAlert.state}.`
-                : "No critical alert is firing right now."}
-            </p>
+          <div className="dashboard-ask-system__signals">
+            <DashboardSignal
+              icon={ShieldAlert}
+              label="Critical alerts"
+              value={radar.criticalAlerts.length}
+            />
+            <DashboardSignal
+              icon={Bot}
+              label="AI providers"
+              value={radar.enabledProviders.length}
+            />
+            <DashboardSignal icon={Server} label="Services" value={services.data.length} />
           </div>
-          <div className="dashboard-response-panel__line">
-            <AlertTriangle className="size-4 text-primary" aria-hidden="true" />
-            <p>
-              {topIncident
-                ? `${topIncident.title} was updated ${formatDateTime(topIncident.updatedAt)}.`
-                : "No active incident requires response."}
-            </p>
-          </div>
-          <Button asChild className="w-fit">
-            <Link to="/ai">Open AI Copilot</Link>
-          </Button>
-        </MotionReveal>
-      </section>
+        </div>
+      </MotionReveal>
     </div>
   );
 }
@@ -379,14 +345,154 @@ function DashboardSummaryValue({
   );
 }
 
-function ActivityItemContent({ item }: { item: ActivityItem }) {
+function DashboardSignal({
+  icon: Icon,
+  label,
+  value
+}: {
+  icon: typeof Server;
+  label: string;
+  value: number;
+}) {
   return (
-    <>
-      <span className="dashboard-activity-strip__label">{item.label}</span>
-      <strong>{item.title}</strong>
-      <span className="dashboard-activity-strip__meta">{item.meta}</span>
-    </>
+    <div className="dashboard-ask-system__signal">
+      <Icon aria-hidden="true" />
+      <p>{formatNumber(value)}</p>
+      <span className="art-eyebrow">{label}</span>
+    </div>
   );
+}
+
+function buildClassicSystemNodes(input: {
+  activeIncidents: number;
+  criticalAlerts: number;
+  enabledProviders: number;
+  latestLatencyMs: number | null;
+  serviceHealth: number;
+  topIncident?: IncidentSummary;
+  topService?: ServiceSummary;
+}): SystemFieldNode[] {
+  return [
+    {
+      id: "core",
+      label: "System core",
+      eyebrow: "PlusOps",
+      value: "LIVE",
+      detail: "Engineering operations control room.",
+      icon: Gauge,
+      kind: "core",
+      relatedIds: ["payments", "incident", "metric", "alert", "ai", "health"],
+      size: "xl",
+      x: 50,
+      y: 49
+    },
+    {
+      id: "payments",
+      label: input.topService?.name ?? "Payments API",
+      eyebrow: "Service",
+      detail: input.topService
+        ? `${input.topService.ownerTeamName} / Tier ${input.topService.tier}`
+        : "Primary payment service.",
+      href: input.topService ? `/services/${input.topService.id}` : "/services",
+      icon: Server,
+      kind: "service",
+      relatedIds: ["core", "incident", "metric", "alert", "health"],
+      size: "lg",
+      x: 20,
+      y: 43
+    },
+    {
+      id: "incident",
+      label: input.topIncident ? shortIncidentTitle(input.topIncident.title) : "Incident field",
+      eyebrow: "Incident",
+      value: input.activeIncidents.toString().padStart(2, "0"),
+      detail: input.topIncident
+        ? `${input.topIncident.serviceName} / ${formatDateTime(input.topIncident.updatedAt)}`
+        : "No active incidents.",
+      href: input.topIncident ? `/incidents/${input.topIncident.id}` : "/incidents",
+      icon: AlertTriangle,
+      kind: "incident",
+      relatedIds: ["core", "payments", "alert", "ai"],
+      size: "lg",
+      x: 34,
+      y: 73
+    },
+    {
+      id: "metric",
+      label: "Latency stream",
+      eyebrow: "Metric",
+      value:
+        input.latestLatencyMs === null
+          ? "n/a"
+          : `${formatNumber(input.latestLatencyMs, { maximumFractionDigits: 0 })}ms`,
+      detail: "The live p95 signal flowing through the system.",
+      href: "/metrics",
+      icon: Activity,
+      kind: "metric",
+      relatedIds: ["core", "payments", "alert", "ai"],
+      x: 62,
+      y: 72
+    },
+    {
+      id: "alert",
+      label: "Critical alert",
+      eyebrow: "Alert",
+      value: input.criticalAlerts.toString(),
+      detail: "Firing rules distort the system field.",
+      href: "/alerts",
+      icon: ShieldAlert,
+      kind: "alert",
+      relatedIds: ["core", "incident", "metric"],
+      x: 80,
+      y: 53
+    },
+    {
+      id: "ai",
+      label: "AI Copilot",
+      eyebrow: "Intelligence",
+      value: input.enabledProviders.toString(),
+      detail: "Provider-agnostic analysis with live operational context.",
+      href: "/ai",
+      icon: Bot,
+      kind: "ai",
+      relatedIds: ["core", "incident", "metric", "alert"],
+      x: 52,
+      y: 23
+    },
+    {
+      id: "health",
+      label: "Health field",
+      eyebrow: "Health",
+      value: `${input.serviceHealth}%`,
+      detail: "Service readiness projected into the environment.",
+      href: "/health",
+      icon: HeartPulse,
+      kind: "health",
+      relatedIds: ["core", "payments"],
+      x: 24,
+      y: 22
+    }
+  ];
+}
+
+function buildClassicSystemConnections(nodes: SystemFieldNode[]): SystemFieldConnection[] {
+  const ids = new Set(nodes.map((node) => node.id));
+  const connection = (
+    from: string,
+    to: string,
+    tone?: SystemFieldConnection["tone"],
+    curve?: number
+  ): SystemFieldConnection[] => ids.has(from) && ids.has(to) ? [{ from, to, tone, curve }] : [];
+
+  return [
+    ...connection("core", "payments", "primary", 0.14),
+    ...connection("payments", "incident", "danger", 0.34),
+    ...connection("incident", "alert", "danger", -0.18),
+    ...connection("alert", "metric", "warning", 0.32),
+    ...connection("metric", "ai", "primary", -0.28),
+    ...connection("ai", "health", "muted", 0.18),
+    ...connection("health", "payments", "primary", -0.12)
+  ];
 }
 
 function DashboardSkeleton() {
@@ -1037,15 +1143,6 @@ function groupAlertsByServiceId(alerts: AlertRule[]) {
   }
 
   return grouped;
-}
-
-function isArcActive(arc: DashboardRadarArc, selectedNode: DashboardRadarNode) {
-  return (
-    arc.fromId === selectedNode.id ||
-    arc.toId === selectedNode.id ||
-    selectedNode.relatedIds.includes(arc.fromId) ||
-    selectedNode.relatedIds.includes(arc.toId)
-  );
 }
 
 function calculateHealthScore(health: ServiceHealthResponse[]) {

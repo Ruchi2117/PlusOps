@@ -21,11 +21,10 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { GlassOrbit } from "../../components/spatial/glass-orbit";
 import { MotionReveal } from "../../components/spatial/motion-reveal";
-import { OperationalScene } from "../../components/spatial/operational-scene";
-import { RelationshipArc } from "../../components/spatial/relationship-arc";
 import { SceneInspector, type SceneInspectorItem } from "../../components/spatial/scene-inspector";
-import { SignalNode, type SignalNodeKind, type SignalNodeStatus } from "../../components/spatial/signal-node";
+import type { SignalNodeKind, SignalNodeStatus } from "../../components/spatial/signal-node";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { EmptyState, ErrorState, RetryButton } from "../../components/ui/data-state";
@@ -91,6 +90,13 @@ const workflowPrompts: Record<Workflow, string> = {
   summarize: "Summarize the current operational context for the response team.",
   create: "Draft an incident update from the current operational context."
 };
+
+const orbitPrompts = [
+  "Why is checkout latency increasing?",
+  "Find the service most likely causing this incident.",
+  "Explain the webhook backlog.",
+  "Draft release notes from shipped changes."
+];
 
 const nodePositions = [
   { x: 25, y: 22 },
@@ -226,118 +232,149 @@ export function AICopilotPage() {
   return (
     <div className="space-y-16">
       <MotionReveal>
-        <OperationalScene
-          aria-labelledby="ai-page-title"
-          className="ai-intelligence-scene"
-          height="full"
-          image={{ src: visualAssets.lightSail, focalPoint: "center", motion: "parallax", opacity: 0.42, scale: 1.08 }}
-          overlay="strong"
-          spatialLayer={
-            <>
-              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[0]!} label="AI context to operational signal" />
-              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[1]!} tone="danger" />
-              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[2]!} tone="muted" />
-              <RelationshipArc from={{ x: 50, y: 50 }} to={nodePositions[3]!} />
-              {contextNodes.map((node) => (
-                <SignalNode
-                  key={node.id}
-                  ariaLabel={`Select ${node.kind} ${node.label}`}
-                  className="ai-context-node"
-                  glow={node.id === selectedContext?.id}
-                  icon={node.icon}
-                  kind={node.kind}
-                  label={node.label}
-                  meta={node.meta}
-                  onSelect={() => selectContext(node)}
-                  selected={node.id === selectedContext?.id}
-                  severity={node.severity}
-                  size="sm"
-                  status={node.status}
-                  value={node.value}
-                  x={node.x}
-                  y={node.y}
-                />
-              ))}
-              <SignalNode
-                ariaLabel="PlusOps AI core"
-                className="ai-core-node"
-                glow
-                icon={Bot}
-                kind="core"
-                label="AI core"
-                meta={`${contextNodes.length} live signals in context`}
-                size="core"
-                status="unknown"
-                value="PlusOps"
-                x={50}
-                y={50}
-              />
-            </>
-          }
-          inspector={
-            selectedContext ? (
+        <section className="portal-core ai-portal" aria-labelledby="ai-page-title">
+          <img className="ai-portal__image" src={visualAssets.lightSail} alt="" loading="eager" />
+          <img className="ai-portal__accent" src={visualAssets.orangeOrbit} alt="" loading="lazy" />
+          <div className="ai-portal__shade" aria-hidden="true" />
+
+          <div className="ai-portal__layout">
+            <div className="ai-portal__question">
+              <ScrollReveal>
+                <p className="art-eyebrow">AI intelligence layer</p>
+                <h1 id="ai-page-title">What do you want to know?</h1>
+                <p className="ai-portal__description">
+                  Ask across incidents, services, metrics, alerts, and health without leaving the
+                  operational context already loaded in PlusOps.
+                </p>
+              </ScrollReveal>
+
+              <ScrollReveal className="ai-portal__compose" delay={0.08}>
+                <label className="space-y-3">
+                  <FieldLabel htmlFor="ai-message">Ask the system</FieldLabel>
+                  <Textarea
+                    id="ai-message"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    placeholder="Ask PlusOps about the selected operational context"
+                  />
+                </label>
+                <div className="ai-portal__compose-actions">
+                  <p>{selectedContext ? `${selectedContext.label} is attached.` : "No context attached."}</p>
+                  <Button disabled={chatMutation.isPending || !message.trim()} onClick={submitChat}>
+                    {chatMutation.isPending ? "Thinking..." : "Send through core"}
+                  </Button>
+                </div>
+              </ScrollReveal>
+            </div>
+
+            <ScrollReveal className="ai-portal__intelligence" delay={0.12} distance={28}>
+              <div className="ai-provider-panel ai-portal__provider">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-white">{selectedProvider?.displayName ?? "Auto provider"}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{selectedProvider?.model ?? "simulated provider"}</p>
+                  </div>
+                  <Badge variant={selectedProvider?.isEnabled ? "success" : "neutral"}>
+                    {selectedProvider?.isEnabled ? "Enabled" : "Auto"}
+                  </Badge>
+                </div>
+                <label className="mt-5 block space-y-2">
+                  <FieldLabel>Provider</FieldLabel>
+                  <Select aria-label="Choose AI provider" value={provider} onChange={(event) => setProvider(event.target.value as AIProvider)}>
+                    <option value="">Auto</option>
+                    {providers.map((item) => (
+                      <option key={item.id} value={item.provider}>{item.displayName} - {item.model}</option>
+                    ))}
+                  </Select>
+                </label>
+              </div>
+
+              <div className="ai-portal__core-stage">
+                <GlassOrbit className="ai-portal__glass-orbit" />
+                <div className="ai-orbit" aria-hidden="true">
+                  <div className="ai-orbit__ring ai-orbit__ring--outer" />
+                  <div className="ai-orbit__ring ai-orbit__ring--inner" />
+                </div>
+                <div className="ai-portal__core" aria-label="PlusOps AI core">
+                  <div className="ai-portal__core-light" />
+                  <Bot aria-hidden="true" />
+                </div>
+                <p className="ai-portal__core-label">AI core</p>
+              </div>
+
+              <div className="ai-portal__prompts">
+                {orbitPrompts.map((prompt) => (
+                  <button key={prompt} type="button" className="ai-orbit__prompt" onClick={() => setMessage(prompt)}>
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+
+              <div className="ai-portal__signals">
+                <CopilotSignal icon={Bot} label="Providers" value={formatNumber(providers.length)} />
+                <CopilotSignal icon={MessagesSquare} label="Tokens" value={latestUsage ? formatNumber(latestUsage.totalTokens) : "0"} />
+                <CopilotSignal icon={TerminalSquare} label="Latency" value={latestUsage ? formatDurationMs(latestUsage.latencyMs) : "n/a"} />
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
+      </MotionReveal>
+
+      <MotionReveal variant="slide">
+        <section className="ai-context-deck" aria-labelledby="ai-context-title">
+          <div className="ai-context-deck__header">
+            <div>
+              <p className="art-eyebrow">Live operational context</p>
+              <h2 id="ai-context-title">Choose the signal PlusOps should reason about.</h2>
+            </div>
+            <p>Context is explicit: selecting a signal changes the metadata sent with the next request.</p>
+          </div>
+
+          <div className="ai-context-deck__layout">
+            <div className="ai-context-deck__signals" role="list" aria-label="Available AI context signals">
+              {contextNodes.map((node) => {
+                const ContextIcon = node.icon;
+                return (
+                  <button
+                    aria-pressed={node.id === selectedContext?.id}
+                    className="ai-context-deck__signal"
+                    data-selected={node.id === selectedContext?.id ? "true" : "false"}
+                    key={node.id}
+                    onClick={() => selectContext(node)}
+                    role="listitem"
+                    type="button"
+                  >
+                    <ContextIcon aria-hidden="true" />
+                    <span>
+                      <small>{node.kind} / {node.status}</small>
+                      <strong>{node.label}</strong>
+                      <em>{node.value} / {node.meta}</em>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedContext ? (
               <SceneInspector
                 actions={
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={() => setMessage(workflowPrompts.investigate)}>
-                      Investigate
-                    </Button>
-                    <Button size="sm" variant="secondary" onClick={() => setMessage(workflowPrompts.summarize)}>
-                      Summarize
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setSelectedContextId("__none__")}>
-                      Clear context
-                    </Button>
+                    <Button size="sm" onClick={() => setMessage(workflowPrompts.investigate)}>Investigate</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setMessage(workflowPrompts.summarize)}>Summarize</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedContextId("__none__")}>Clear context</Button>
                   </div>
                 }
-                className="ai-intelligence-scene__inspector"
+                className="ai-context-deck__inspector"
                 items={selectedInspectorItems}
                 onClose={() => setSelectedContextId("__none__")}
                 subtitle="Live context sent with the next copilot request"
                 title={selectedContext.label}
               />
-            ) : null
-          }
-        >
-          <div className="ai-intelligence-scene__content">
-            <div className="max-w-xl">
-              <p className="art-eyebrow">AI intelligence layer</p>
-              <h1 id="ai-page-title" className="mt-5 text-[clamp(2.6rem,5vw,5.4rem)] font-black leading-[0.9] text-white">
-                Understand the{" "}
-                <br />
-                system around you.
-              </h1>
-              <p className="mt-6 max-w-md text-sm leading-7 text-white/70">
-                PlusOps interprets the incidents, services, metrics, alerts, and health signals already in your control room.
-              </p>
-            </div>
-
-            <div className="ai-intelligence-scene__controls">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-white">{selectedProvider?.displayName ?? "Auto provider"}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{selectedProvider?.model ?? "simulated provider"}</p>
-                </div>
-                <Badge variant={selectedProvider?.isEnabled ? "success" : "neutral"}>{selectedProvider?.isEnabled ? "Enabled" : "Auto"}</Badge>
-              </div>
-              <label className="mt-4 block space-y-2">
-                <FieldLabel>Provider</FieldLabel>
-                <Select aria-label="Choose AI provider" value={provider} onChange={(event) => setProvider(event.target.value as AIProvider)}>
-                  <option value="">Auto</option>
-                  {providers.map((item) => (
-                    <option key={item.id} value={item.provider}>{item.displayName} - {item.model}</option>
-                  ))}
-                </Select>
-              </label>
-            </div>
-
-            <div className="ai-intelligence-scene__legend" aria-label="Operational context legend">
-              <span><TriangleAlert aria-hidden="true" /> incidents and alerts</span>
-              <span><Network aria-hidden="true" /> services and dependencies</span>
-              <span><Activity aria-hidden="true" /> metrics and health</span>
-            </div>
+            ) : (
+              <EmptyState className="ai-context-deck__empty" title="No context selected" description="Choose a signal to attach live operational metadata." />
+            )}
           </div>
-        </OperationalScene>
+        </section>
       </MotionReveal>
 
       <MotionReveal className="ai-command-reveal" variant="slide">
