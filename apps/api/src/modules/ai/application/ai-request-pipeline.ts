@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException
+} from "@nestjs/common";
 import type { AIFeature, AIProvider } from "@plusops/contracts";
 import { randomUUID } from "node:crypto";
 
@@ -15,6 +20,7 @@ import {
 import {
   AI_AUDIT_REPOSITORY,
   AI_CONVERSATION_REPOSITORY,
+  AI_OPERATIONAL_CONTEXT,
   AI_PROMPT_TEMPLATE_REPOSITORY,
   AI_PROVIDER_CONFIGURATION_REPOSITORY,
   AI_PROVIDER_REGISTRY,
@@ -23,6 +29,7 @@ import {
 import { toAIOperationResponse } from "./mappers/ai-response.mapper";
 import type {
   AIAuditRepositoryPort,
+  AIOperationalContextPort,
   AIProviderMessage,
   AIProviderRegistryPort,
   ConversationRepositoryPort,
@@ -63,6 +70,8 @@ export class AIRequestPipeline {
     private readonly aiAuditRepository: AIAuditRepositoryPort,
     @Inject(AI_PROVIDER_REGISTRY)
     private readonly providerRegistry: AIProviderRegistryPort,
+    @Inject(AI_OPERATIONAL_CONTEXT)
+    private readonly operationalContext: AIOperationalContextPort,
     @Inject(AUTH_AUDIT_LOG)
     private readonly auditLog: AuthAuditLogPort,
     @Inject(AUTH_CLOCK)
@@ -72,7 +81,11 @@ export class AIRequestPipeline {
   async execute(input: AIRequestPipelineInput) {
     const providerConfiguration = await this.resolveProvider(input.provider);
     const provider = this.providerRegistry.get(providerConfiguration.provider);
-    const renderedPrompt = await this.renderPrompt(input);
+    const groundedContext = await this.operationalContext.resolve(input.context ?? {});
+    const renderedPrompt = await this.renderPrompt({
+      ...input,
+      context: { ...(input.context ?? {}), ...groundedContext }
+    });
     const now = this.clock.now();
     const existingConversation = input.conversationId
       ? await this.conversationRepository.findById(input.conversationId)
@@ -91,7 +104,7 @@ export class AIRequestPipeline {
         provider: providerConfiguration.provider,
         model: providerConfiguration.toSnapshot().model,
         actorUserId: input.actorUserId,
-        context: input.context ?? {},
+        context: groundedContext,
         createdAt: now,
         updatedAt: now
       });
@@ -130,7 +143,7 @@ export class AIRequestPipeline {
       systemPrompt: renderedPrompt.systemPrompt,
       userPrompt: renderedPrompt.userPrompt,
       messages: providerMessages,
-      context: input.context ?? {},
+      context: groundedContext,
       maxTokens: providerConfiguration.toSnapshot().maxTokens,
       temperature: providerConfiguration.toSnapshot().temperature
     });
@@ -206,11 +219,15 @@ export class AIRequestPipeline {
       : await this.providerConfigurationRepository.findDefaultEnabled();
 
     if (!configuration) {
-      throw new NotFoundException("AI provider configuration could not be found.");
+      throw new ServiceUnavailableException(
+        "AI is not configured. Set AI_API_KEY, AI_MODEL, AI_PROVIDER, and AI_BASE_URL."
+      );
     }
 
     if (!configuration.toSnapshot().isEnabled) {
-      throw new BadRequestException("AI provider is disabled.");
+      throw new ServiceUnavailableException(
+        "AI provider is disabled because no matching runtime provider is configured."
+      );
     }
 
     return configuration;

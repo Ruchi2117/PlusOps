@@ -20,7 +20,7 @@ export class UpdateAIProviderDto {
   @MaxLength(120)
   displayName?: string;
 
-  @ApiPropertyOptional({ example: "gpt-simulated-plusops" })
+  @ApiPropertyOptional({ example: "gpt-4.1-mini" })
   @IsOptional()
   @IsString()
   @MinLength(1)

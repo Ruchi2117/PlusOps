@@ -1,15 +1,17 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import type { Prisma } from "@prisma/client";
 import type { AIFeature as PrismaAIFeature } from "@prisma/client";
 
 import { PrismaService } from "../../../../common/prisma/prisma.service";
+import type { Environment } from "../../../../config/environment";
 
 const providerDefaults = [
   {
     provider: "OPENAI",
     displayName: "OpenAI",
-    model: "gpt-simulated-plusops",
+    model: "not-configured",
     priority: 10,
     maxTokens: 4096,
     temperature: 0.2,
@@ -19,7 +21,7 @@ const providerDefaults = [
   {
     provider: "CLAUDE",
     displayName: "Claude",
-    model: "claude-simulated-plusops",
+    model: "not-configured",
     priority: 20,
     maxTokens: 4096,
     temperature: 0.2,
@@ -29,7 +31,7 @@ const providerDefaults = [
   {
     provider: "GEMINI",
     displayName: "Gemini",
-    model: "gemini-simulated-plusops",
+    model: "not-configured",
     priority: 30,
     maxTokens: 4096,
     temperature: 0.2,
@@ -39,7 +41,7 @@ const providerDefaults = [
   {
     provider: "GROQ",
     displayName: "Groq",
-    model: "groq-simulated-plusops",
+    model: "not-configured",
     priority: 40,
     maxTokens: 4096,
     temperature: 0.2,
@@ -118,19 +120,28 @@ const promptDefaults = [
 export class PrismaAICatalogSeeder implements OnModuleInit {
   constructor(
     @Inject(PrismaService)
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    @Inject(ConfigService)
+    private readonly config: ConfigService<Environment, true>
   ) {}
 
   async onModuleInit(): Promise<void> {
     await this.prisma.$transaction(async (transaction) => {
+      const configuredProvider = this.config.get("AI_PROVIDER", { infer: true }).toUpperCase();
+      const configuredModel = this.config.get("AI_MODEL", { infer: true });
+      const hasApiKey = Boolean(this.config.get("AI_API_KEY", { infer: true }));
+
       for (const provider of providerDefaults) {
+        const isConfigured = provider.provider === configuredProvider;
+        const runtimeProvider = {
+          ...provider,
+          model: isConfigured && configuredModel ? configuredModel : provider.model,
+          isEnabled: isConfigured && hasApiKey
+        };
         await transaction.providerConfiguration.upsert({
           where: { provider: provider.provider },
-          update: provider,
-          create: {
-            ...provider,
-            isEnabled: true
-          }
+          update: runtimeProvider,
+          create: runtimeProvider
         });
       }
 

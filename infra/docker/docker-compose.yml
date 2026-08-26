@@ -21,23 +21,14 @@ services:
   redis:
     image: redis:7.4-alpine
     container_name: plusops-redis
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mailpit:
-    image: axllent/mailpit:v1.21
-    container_name: plusops-mailpit
-    ports:
-      - "1025:1025"
-      - "8025:8025"
+      interval: 3s
+      timeout: 3s
+      retries: 10
 
   prometheus:
     image: prom/prometheus:v2.55.1
@@ -59,11 +50,11 @@ services:
       - "3001:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
 
 volumes:
   postgres-data:
-  redis-data:
   grafana-data:
-

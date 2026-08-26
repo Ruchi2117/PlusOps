@@ -1,0 +1,49 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "panels": [
+    {
+      "title": "Request rate",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "plusops-prometheus" },
+      "targets": [{ "expr": "sum(rate(plusops_http_requests_total[5m])) by (route)", "legendFormat": "{{route}}" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "P95 request latency",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "plusops-prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(plusops_http_request_duration_seconds_bucket[5m])) by (le, route))", "legendFormat": "{{route}}" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "HTTP errors",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "plusops-prometheus" },
+      "targets": [{ "expr": "sum(rate(plusops_http_errors_total[5m])) by (route, status_code)", "legendFormat": "{{route}} {{status_code}}" }],
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 }
+    },
+    {
+      "title": "Redis availability",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "plusops-prometheus" },
+      "targets": [{ "expr": "max(plusops_redis_available)", "legendFormat": "Redis" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 }
+    },
+    {
+      "title": "AI rate-limit decisions",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "plusops-prometheus" },
+      "targets": [{ "expr": "sum(rate(plusops_ai_rate_limit_decisions_total[5m])) by (outcome)", "legendFormat": "{{outcome}}" }],
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 8 }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["plusops"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timezone": "browser",
+  "title": "PlusOps API",
+  "uid": "plusops-api",
+  "version": 1
+}

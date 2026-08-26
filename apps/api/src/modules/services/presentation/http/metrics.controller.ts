@@ -133,7 +133,7 @@ export class MetricsController {
   @Post("query")
   @RequirePermissions(SYSTEM_PERMISSIONS.METRICS_VIEW)
   @ApiBody({ type: QueryMetricsDto })
-  @ApiOkResponse({ description: "Metric query validated and simulated." })
+  @ApiOkResponse({ description: "Metric query executed against persisted samples." })
   @ApiBadRequestResponse({ description: "Invalid metric query payload." })
   async query(
     @Body() body: QueryMetricsDto,

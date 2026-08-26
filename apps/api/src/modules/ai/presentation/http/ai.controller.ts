@@ -52,6 +52,7 @@ import {
   AIToolDto,
   UpdateAIProviderDto
 } from "./dtos";
+import { AIRateLimitGuard } from "./guards/ai-rate-limit.guard";
 
 @ApiTags("AI Copilot")
 @ApiBearerAuth()
@@ -86,6 +87,7 @@ export class AIController {
   ) {}
 
   @Post("chat")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_USE)
   @ApiBody({ type: AIChatDto })
   @ApiOkResponse({ description: "AI chat response returned." })
@@ -101,6 +103,7 @@ export class AIController {
   }
 
   @Post("log-analysis")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_ENGINEERING_USE)
   @ApiBody({ type: AIToolDto })
   @ApiOkResponse({ description: "Log analysis response returned." })
@@ -112,6 +115,7 @@ export class AIController {
   }
 
   @Post("stacktrace")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_ENGINEERING_USE)
   @ApiBody({ type: AIToolDto })
   @ApiOkResponse({ description: "Stack trace explanation returned." })
@@ -123,6 +127,7 @@ export class AIController {
   }
 
   @Post("incident-summary")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_ENGINEERING_USE)
   @ApiBody({ type: AIToolDto })
   @ApiOkResponse({ description: "Incident summary returned." })
@@ -134,6 +139,7 @@ export class AIController {
   }
 
   @Post("sql")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_ENGINEERING_USE)
   @ApiBody({ type: AISqlDto })
   @ApiOkResponse({ description: "SQL generation response returned." })
@@ -157,6 +163,7 @@ export class AIController {
   }
 
   @Post("docs")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_ENGINEERING_USE)
   @ApiBody({ type: AIDocsDto })
   @ApiOkResponse({ description: "API documentation response returned." })
@@ -180,6 +187,7 @@ export class AIController {
   }
 
   @Post("release-notes")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_ENGINEERING_USE)
   @ApiBody({ type: AIReleaseNotesDto })
   @ApiOkResponse({ description: "Release notes response returned." })
@@ -226,6 +234,7 @@ export class AIController {
   }
 
   @Post("playground")
+  @UseGuards(AIRateLimitGuard)
   @RequirePermissions(SYSTEM_PERMISSIONS.AI_USE)
   @ApiBody({ type: AIPlaygroundDto })
   @ApiOkResponse({ description: "AI playground response returned." })

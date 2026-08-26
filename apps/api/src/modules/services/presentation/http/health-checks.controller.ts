@@ -94,7 +94,7 @@ export class HealthChecksController {
   @Post(":healthCheckId/run")
   @RequirePermissions(SYSTEM_PERMISSIONS.HEALTH_RUN)
   @ApiBody({ type: RunHealthCheckDto })
-  @ApiOkResponse({ description: "Health check simulated and evaluated." })
+  @ApiOkResponse({ description: "Health check executed and service health evaluated." })
   @ApiBadRequestResponse({ description: "Invalid health result payload." })
   @ApiNotFoundResponse({ description: "Health check or service could not be found." })
   async run(

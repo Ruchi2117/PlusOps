@@ -25,12 +25,29 @@ const environmentSchema = z.object({
   AUTH_REFRESH_COOKIE_NAME: z.string().default("plusops_refresh_token"),
   AUTH_COOKIE_DOMAIN: z.string().optional(),
   AUTH_REQUIRE_EMAIL_VERIFICATION: booleanEnvironmentSchema.default(false),
+  AI_PROVIDER: z.enum(["openai", "groq"]).default("openai"),
+  AI_API_KEY: z.string().min(1).optional(),
+  AI_MODEL: z.string().min(1).optional(),
+  AI_BASE_URL: z.string().url().default("https://api.openai.com/v1"),
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().max(120_000).default(20_000),
+  AI_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().max(1_000).default(20),
+  AI_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().max(3_600).default(60),
+  HEALTH_CHECK_ALLOWED_HOSTS: z.string().default("localhost,127.0.0.1"),
   JWT_ACCESS_SECRET: z.string().min(24).optional(),
   JWT_ACCESS_TTL: z.string().default("15m"),
   JWT_REFRESH_SECRET: z.string().min(24).optional(),
   JWT_REFRESH_TTL: z.string().default("7d"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().max(30_000).default(1_000),
   REDIS_URL: z.string().url().optional()
+}).superRefine((environment, context) => {
+  if (environment.AI_API_KEY && !environment.AI_MODEL) {
+    context.addIssue({
+      code: "custom",
+      path: ["AI_MODEL"],
+      message: "AI_MODEL is required when AI_API_KEY is configured."
+    });
+  }
 });
 
 export type Environment = z.infer<typeof environmentSchema>;

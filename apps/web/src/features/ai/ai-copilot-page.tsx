@@ -138,6 +138,7 @@ export function AICopilotPage() {
   const healthByServiceId = useMemo(() => new Map(health.map((item) => [item.serviceId, item])), [health]);
   const latestUsage = chatMutation.data?.usage ?? playgroundMutation.data?.usage ?? toolMutation.data?.usage ?? null;
   const latestOutput = chatMutation.data?.output ?? playgroundMutation.data?.output ?? toolMutation.data?.output ?? "";
+  const operationError = chatMutation.error ?? playgroundMutation.error ?? toolMutation.error;
   const isLoading = [providersQuery, incidentsQuery, servicesQuery, metricsQuery, alertsQuery, healthQuery].some(
     (query) => query.isLoading
   );
@@ -260,7 +261,7 @@ export function AICopilotPage() {
                 </label>
                 <div className="ai-portal__compose-actions">
                   <p>{selectedContext ? `${selectedContext.label} is attached.` : "No context attached."}</p>
-                  <Button disabled={chatMutation.isPending || !message.trim()} onClick={submitChat}>
+                  <Button disabled={chatMutation.isPending || !message.trim() || !selectedProvider?.isEnabled} onClick={submitChat}>
                     {chatMutation.isPending ? "Thinking..." : "Send through core"}
                   </Button>
                 </div>
@@ -272,7 +273,7 @@ export function AICopilotPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-white">{selectedProvider?.displayName ?? "Auto provider"}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{selectedProvider?.model ?? "simulated provider"}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{selectedProvider?.model ?? "Provider not configured"}</p>
                   </div>
                   <Badge variant={selectedProvider?.isEnabled ? "success" : "neutral"}>
                     {selectedProvider?.isEnabled ? "Enabled" : "Auto"}
@@ -283,7 +284,9 @@ export function AICopilotPage() {
                   <Select aria-label="Choose AI provider" value={provider} onChange={(event) => setProvider(event.target.value as AIProvider)}>
                     <option value="">Auto</option>
                     {providers.map((item) => (
-                      <option key={item.id} value={item.provider}>{item.displayName} - {item.model}</option>
+                      <option disabled={!item.isEnabled} key={item.id} value={item.provider}>
+                        {item.displayName} - {item.model}{item.isEnabled ? "" : " (not configured)"}
+                      </option>
                     ))}
                   </Select>
                 </label>
@@ -395,12 +398,21 @@ export function AICopilotPage() {
           </TabList>
           <div className="ai-chat-compose">
             <Textarea aria-label="Ask PlusOps" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask PlusOps about the selected operational context" />
-            <Button disabled={chatMutation.isPending || !message.trim() || !selectedContext} onClick={submitChat}>
+            <Button disabled={chatMutation.isPending || !message.trim() || !selectedContext || !selectedProvider?.isEnabled} onClick={submitChat}>
               {chatMutation.isPending ? "Thinking..." : "Send through core"}
             </Button>
           </div>
         </section>
       </MotionReveal>
+
+      {!selectedProvider?.isEnabled ? (
+        <ErrorState
+          title="AI provider not configured"
+          description="Set AI_PROVIDER, AI_API_KEY, AI_MODEL, and AI_BASE_URL on the API. PlusOps will not substitute a fabricated response."
+        />
+      ) : operationError ? (
+        <ErrorState title="AI request failed" description={getApiErrorMessage(operationError)} />
+      ) : null}
 
       <section className="ai-workflow-grid grid gap-10 xl:grid-cols-[0.82fr_1.18fr]">
         <ScrollReveal>
@@ -442,7 +454,7 @@ export function AICopilotPage() {
               <label className="space-y-2">
                 <FieldLabel htmlFor="tool-input">Workflow input</FieldLabel>
                 <Textarea id="tool-input" value={toolInput} onChange={(event) => setToolInput(event.target.value)} placeholder={tools.find((tool) => tool.id === activeTool)?.placeholder} />
-                <Button disabled={toolMutation.isPending || !toolInput.trim()} type="submit">{toolMutation.isPending ? "Running..." : "Run workflow"}</Button>
+                <Button disabled={toolMutation.isPending || !toolInput.trim() || !selectedProvider?.isEnabled} type="submit">{toolMutation.isPending ? "Running..." : "Run workflow"}</Button>
               </label>
               <div className="ai-response-panel" aria-live="polite">
                 {latestOutput ? <pre className="whitespace-pre-wrap text-sm leading-7 text-foreground">{latestOutput}</pre> : <EmptyState className="min-h-48" title="No workflow output" />}
@@ -465,7 +477,7 @@ export function AICopilotPage() {
           }}>
             <label className="space-y-2"><FieldLabel>System prompt</FieldLabel><Textarea value={playgroundSystem} onChange={(event) => setPlaygroundSystem(event.target.value)} /></label>
             <label className="space-y-2"><FieldLabel>User prompt</FieldLabel><Textarea value={playgroundUser} onChange={(event) => setPlaygroundUser(event.target.value)} /></label>
-            <div className="flex items-end"><Button disabled={playgroundMutation.isPending} type="submit">Run playground</Button></div>
+            <div className="flex items-end"><Button disabled={playgroundMutation.isPending || !selectedProvider?.isEnabled} type="submit">Run playground</Button></div>
           </form>
         </section>
       </MotionReveal>
@@ -531,7 +543,12 @@ export function buildContextNodes({
       meta: service?.name ?? "system signal",
       ...nodePositions[nodes.length]!,
       icon: TriangleAlert,
-      context: { serviceId: firingAlert.condition.serviceId, environment: "production", tags: [firingAlert.severity, firingAlert.state] },
+      context: {
+        serviceId: firingAlert.condition.serviceId,
+        environment: "production",
+        tags: [firingAlert.severity, firingAlert.state],
+        metadata: { alertRuleId: firingAlert.id }
+      },
       inspector: [
         { label: "State", value: firingAlert.state.toUpperCase(), state: "danger" },
         { label: "Severity", value: firingAlert.severity.toUpperCase() },

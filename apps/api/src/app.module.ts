@@ -6,6 +6,8 @@ import { AIModule } from "./modules/ai/ai.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { HealthModule } from "./modules/health/health.module";
 import { IncidentsModule } from "./modules/incidents/incidents.module";
+import { ObservabilityModule } from "./modules/observability/observability.module";
+import { ReliabilityModule } from "./modules/reliability/reliability.module";
 import { ServicesModule } from "./modules/services/services.module";
 
 @Module({
@@ -15,6 +17,8 @@ import { ServicesModule } from "./modules/services/services.module";
       envFilePath: [".env", "../../.env", "apps/api/.env"],
       validate: validateEnvironment
     }),
+    ObservabilityModule,
+    ReliabilityModule,
     AuthModule,
     AIModule,
     HealthModule,

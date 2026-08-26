@@ -8,6 +8,7 @@ import { AUTH_AUDIT_LOG, AUTH_CLOCK } from "../../../auth/auth.tokens";
 import { HealthCheckResult, HealthEvaluation, HealthTimelineEvent } from "../../domain";
 import {
   HEALTH_CHECK_REPOSITORY,
+  HEALTH_CHECK_EXECUTOR,
   HEALTH_EVALUATION_REPOSITORY,
   HEALTH_RESULT_REPOSITORY,
   SERVICE_REPOSITORY
@@ -16,6 +17,7 @@ import { assertCanRunHealthCheck, type HealthActor } from "../health-permissions
 import { toHealthCheckResult, toHealthEvaluation } from "../mappers/health-response.mapper";
 import type {
   HealthCheckRepositoryPort,
+  HealthCheckExecutorPort,
   HealthEvaluationRepositoryPort,
   HealthResultRepositoryPort,
   ServiceRepositoryPort
@@ -35,6 +37,8 @@ export class RunHealthCheckUseCase {
     private readonly serviceRepository: ServiceRepositoryPort,
     @Inject(HEALTH_CHECK_REPOSITORY)
     private readonly healthCheckRepository: HealthCheckRepositoryPort,
+    @Inject(HEALTH_CHECK_EXECUTOR)
+    private readonly healthCheckExecutor: HealthCheckExecutorPort,
     @Inject(HEALTH_RESULT_REPOSITORY)
     private readonly healthResultRepository: HealthResultRepositoryPort,
     @Inject(HEALTH_EVALUATION_REPOSITORY)
@@ -62,7 +66,11 @@ export class RunHealthCheckUseCase {
     const previousEvaluation = await this.healthEvaluationRepository.findLatestByService(
       healthCheck.serviceId
     );
-    const result = createSimulatedResult(command, healthCheck.id, healthCheck.serviceId, now);
+    const execution = await this.healthCheckExecutor.execute({
+      healthCheck: healthCheck.toSnapshot(),
+      service: service.toSnapshot()
+    });
+    const result = createExecutedResult(execution, healthCheck.id, healthCheck.serviceId, now);
     const checks = await this.healthCheckRepository.listByService(healthCheck.serviceId, {
       includeDisabled: true
     });
@@ -114,8 +122,8 @@ export class RunHealthCheckUseCase {
   }
 }
 
-function createSimulatedResult(
-  command: RunHealthCheckCommand,
+function createExecutedResult(
+  execution: Awaited<ReturnType<HealthCheckExecutorPort["execute"]>>,
   healthCheckId: string,
   serviceId: string,
   checkedAt: Date
@@ -125,9 +133,9 @@ function createSimulatedResult(
       id: randomUUID(),
       serviceId,
       healthCheckId,
-      status: command.status ?? "healthy",
-      responseTimeMs: command.responseTimeMs,
-      message: command.message,
+      status: execution.status,
+      responseTimeMs: execution.responseTimeMs ?? undefined,
+      message: execution.message,
       checkedAt,
       createdAt: checkedAt
     });

@@ -34,3 +34,7 @@ export interface AIProviderRegistryPort {
   list(): AIProviderPort[];
   get(provider: AIProvider): AIProviderPort;
 }
+
+export interface AIOperationalContextPort {
+  resolve(requestedContext: Record<string, unknown>): Promise<Record<string, unknown>>;
+}

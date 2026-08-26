@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { PrismaModule } from "../../common/prisma/prisma.module";
 import { AuthModule } from "../auth/auth.module";
 import { AIRequestPipeline } from "./application/ai-request-pipeline";
+import { AIRateLimiter } from "./application/ai-rate-limiter";
 import {
   ChatWithAIUseCase,
   ExecuteAIToolUseCase,
@@ -13,6 +14,7 @@ import {
 import {
   AI_AUDIT_REPOSITORY,
   AI_CONVERSATION_REPOSITORY,
+  AI_OPERATIONAL_CONTEXT,
   AI_PROMPT_TEMPLATE_REPOSITORY,
   AI_PROVIDER_CONFIGURATION_REPOSITORY,
   AI_PROVIDER_REGISTRY,
@@ -24,14 +26,13 @@ import { PrismaConversationRepository } from "./infrastructure/persistence/prism
 import { PrismaPromptTemplateRepository } from "./infrastructure/persistence/prisma-prompt-template.repository";
 import { PrismaProviderConfigurationRepository } from "./infrastructure/persistence/prisma-provider-configuration.repository";
 import { PrismaUsageRecordRepository } from "./infrastructure/persistence/prisma-usage-record.repository";
+import { PrismaAIOperationalContext } from "./infrastructure/context/prisma-ai-operational-context";
 import {
-  SimulatedClaudeProvider,
-  SimulatedGeminiProvider,
-  SimulatedGroqProvider,
-  SimulatedOpenAIProvider,
-  StaticAIProviderRegistry
-} from "./infrastructure/providers/simulated-ai-provider";
+  ConfiguredAIProviderRegistry,
+  OpenAICompatibleProvider
+} from "./infrastructure/providers/openai-compatible.provider";
 import { AIController } from "./presentation/http/ai.controller";
+import { AIRateLimitGuard } from "./presentation/http/guards/ai-rate-limit.guard";
 
 const aiUseCases = [
   ChatWithAIUseCase,
@@ -46,15 +47,18 @@ const aiUseCases = [
   controllers: [AIController],
   providers: [
     AIRequestPipeline,
+    AIRateLimiter,
+    AIRateLimitGuard,
     ...aiUseCases,
     PrismaAICatalogSeeder,
-    SimulatedOpenAIProvider,
-    SimulatedClaudeProvider,
-    SimulatedGeminiProvider,
-    SimulatedGroqProvider,
+    OpenAICompatibleProvider,
     {
       provide: AI_PROVIDER_REGISTRY,
-      useClass: StaticAIProviderRegistry
+      useClass: ConfiguredAIProviderRegistry
+    },
+    {
+      provide: AI_OPERATIONAL_CONTEXT,
+      useClass: PrismaAIOperationalContext
     },
     {
       provide: AI_PROVIDER_CONFIGURATION_REPOSITORY,
@@ -81,6 +85,7 @@ const aiUseCases = [
     AIRequestPipeline,
     ...aiUseCases,
     AI_PROVIDER_REGISTRY,
+    AI_OPERATIONAL_CONTEXT,
     AI_PROVIDER_CONFIGURATION_REPOSITORY,
     AI_PROMPT_TEMPLATE_REPOSITORY,
     AI_CONVERSATION_REPOSITORY,

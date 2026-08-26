@@ -46,6 +46,7 @@ import { PrismaMetricRetentionRepository } from "./infrastructure/persistence/pr
 import { PrismaMetricSampleRepository } from "./infrastructure/persistence/prisma-metric-sample.repository";
 import { PrismaMetricSeriesRepository } from "./infrastructure/persistence/prisma-metric-series.repository";
 import { PrismaServiceRepository } from "./infrastructure/persistence/prisma-service.repository";
+import { NetworkHealthCheckExecutor } from "./infrastructure/health/network-health-check.executor";
 import { AlertsController } from "./presentation/http/alerts.controller";
 import { HealthChecksController } from "./presentation/http/health-checks.controller";
 import { MetricsController } from "./presentation/http/metrics.controller";
@@ -59,6 +60,7 @@ import {
   DEPLOYMENT_REPOSITORY,
   ENVIRONMENT_REPOSITORY,
   HEALTH_CHECK_REPOSITORY,
+  HEALTH_CHECK_EXECUTOR,
   HEALTH_EVALUATION_REPOSITORY,
   HEALTH_RESULT_REPOSITORY,
   METRIC_DEFINITION_REPOSITORY,
@@ -133,6 +135,10 @@ const serviceUseCases = [
       useClass: PrismaHealthCheckRepository
     },
     {
+      provide: HEALTH_CHECK_EXECUTOR,
+      useClass: NetworkHealthCheckExecutor
+    },
+    {
       provide: HEALTH_RESULT_REPOSITORY,
       useClass: PrismaHealthResultRepository
     },
@@ -176,6 +182,7 @@ const serviceUseCases = [
     DEPENDENCY_REPOSITORY,
     DEPLOYMENT_REPOSITORY,
     HEALTH_CHECK_REPOSITORY,
+    HEALTH_CHECK_EXECUTOR,
     HEALTH_RESULT_REPOSITORY,
     HEALTH_EVALUATION_REPOSITORY,
     METRIC_DEFINITION_REPOSITORY,
