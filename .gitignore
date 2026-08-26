@@ -9,6 +9,9 @@ build/
 coverage/
 .turbo/
 *.tsbuildinfo
+playwright-report/
+test-results/
+blob-report/
 
 # Env
 .env

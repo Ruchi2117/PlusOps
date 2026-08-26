@@ -17,6 +17,8 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm contracts:build && pnpm --filter @plusops/api typecheck && pnpm --filter @plusops/web typecheck",
     "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @plusops/web test:e2e",
+    "test:integration": "pnpm --filter @plusops/api test:integration",
     "format": "pnpm -r format",
     "db:deploy": "pnpm --filter @plusops/api prisma:deploy",
     "db:generate": "pnpm --filter @plusops/api prisma:generate",

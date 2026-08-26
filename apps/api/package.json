@@ -18,7 +18,8 @@
     "prisma:status": "node prisma/run-prisma.cjs migrate status --schema prisma/schema.prisma",
     "prisma:validate": "node prisma/run-prisma.cjs validate --schema prisma/schema.prisma",
     "start": "node dist/main.js",
-    "test": "vitest run --passWithNoTests --maxWorkers=1 --minWorkers=1",
+    "test": "vitest run --exclude test/integration/** --passWithNoTests --maxWorkers=1 --minWorkers=1",
+    "test:integration": "node test/run-integration.cjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

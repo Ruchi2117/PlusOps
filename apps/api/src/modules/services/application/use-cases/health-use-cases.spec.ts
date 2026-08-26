@@ -5,6 +5,8 @@ import type { AuthAuditLogPort, ClockPort } from "../../../auth/application/port
 import type { AuthenticatedUser } from "../../../auth/presentation/http/authenticated-user";
 import { HealthCheck, HealthEvaluation, Service } from "../../domain";
 import type {
+  HealthCheckExecutorPort,
+  HealthCheckExecution,
   HealthCheckRepositoryPort,
   HealthEvaluationRepositoryPort,
   HealthResultRepositoryPort,
@@ -46,7 +48,7 @@ describe("health use cases", () => {
     expect(response.healthCheck.name).toBe("Readiness");
   });
 
-  it("runs a simulated check, evaluates service health, writes timeline events, and audits", async () => {
+  it("persists executed check output, evaluates service health, writes timeline events, and audits", async () => {
     const evaluationRepository = createHealthEvaluationRepository({
       findLatestByService: vi.fn(async () =>
         HealthEvaluation.create({
@@ -63,6 +65,11 @@ describe("health use cases", () => {
     const useCase = new RunHealthCheckUseCase(
       createServiceRepository(),
       createHealthCheckRepository(),
+      createHealthCheckExecutor({
+        status: "unhealthy",
+        responseTimeMs: 1200,
+        message: "HTTP 500"
+      }),
       createHealthResultRepository(),
       evaluationRepository,
       auditLog,
@@ -118,6 +125,7 @@ describe("health use cases", () => {
     const useCase = new RunHealthCheckUseCase(
       createServiceRepository({ actorBelongsToTeam: vi.fn(async () => false) }),
       createHealthCheckRepository(),
+      createHealthCheckExecutor(),
       createHealthResultRepository(),
       evaluationRepository,
       createAuditLog(),
@@ -158,6 +166,14 @@ function createHealthCheckRepository(
     findById: vi.fn(async () => healthCheck()),
     listByService: vi.fn(async () => [healthCheck()]),
     ...overrides
+  };
+}
+
+function createHealthCheckExecutor(
+  result: HealthCheckExecution = { status: "healthy", responseTimeMs: 42, message: "HTTP 200" }
+): HealthCheckExecutorPort {
+  return {
+    execute: vi.fn(async () => result)
   };
 }
 

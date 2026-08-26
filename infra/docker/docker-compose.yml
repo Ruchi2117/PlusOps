@@ -18,6 +18,22 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-test:
+    image: postgres:17-alpine
+    container_name: plusops-postgres-test
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: plusops_test
+      POSTGRES_USER: plusops
+      POSTGRES_PASSWORD: plusops
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plusops -d plusops_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
   redis:
     image: redis:7.4-alpine
     container_name: plusops-redis

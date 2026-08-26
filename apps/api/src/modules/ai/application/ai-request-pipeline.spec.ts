@@ -10,6 +10,7 @@ import {
 import { AIRequestPipeline } from "./ai-request-pipeline";
 import type {
   AIAuditRepositoryPort,
+  AIOperationalContextPort,
   AIProviderPort,
   AIProviderRegistryPort,
   ConversationRepositoryPort,
@@ -32,6 +33,7 @@ describe("AIRequestPipeline", () => {
       usageRepository,
       aiAuditRepository,
       createProviderRegistry(provider),
+      createOperationalContext(),
       authAuditLog,
       clock()
     );
@@ -167,6 +169,18 @@ function createProviderRegistry(provider: AIProviderPort): AIProviderRegistryPor
   return {
     list: vi.fn(() => [provider]),
     get: vi.fn(() => provider)
+  };
+}
+
+function createOperationalContext(): AIOperationalContextPort {
+  return {
+    resolve: vi.fn(async (requested) => ({
+      grounding: {
+        source: "postgresql",
+        retrievedAt: now().toISOString(),
+        requested
+      }
+    }))
   };
 }
 

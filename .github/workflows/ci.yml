@@ -11,7 +11,34 @@ jobs:
   validate:
     name: Validate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    env:
+      TEST_DATABASE_URL: postgresql://plusops:plusops@localhost:5432/plusops_test?schema=public
+      TEST_REDIS_URL: redis://localhost:6379/1
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: plusops_test
+          POSTGRES_USER: plusops
+          POSTGRES_PASSWORD: plusops
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U plusops -d plusops_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -42,6 +69,15 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: PostgreSQL integration test
+        run: pnpm test:integration
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @plusops/web exec playwright install --with-deps chromium
+
+      - name: Browser end-to-end test
+        run: pnpm test:e2e
 
       - name: Build
         run: pnpm build
