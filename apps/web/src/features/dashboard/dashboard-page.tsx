@@ -23,7 +23,8 @@ import { Link } from "react-router";
 
 import {
   GlassOrbit,
-  MotionReveal
+  MotionReveal,
+  SignalRibbon
 } from "../../components/spatial";
 import {
   SystemField,
@@ -97,12 +98,6 @@ type DashboardRadarModel = {
   primaryNodeId: string;
   serviceHealthScore: number;
 };
-
-const metricWave = [
-  "M 4 58 C 18 32, 31 78, 45 48 S 72 22, 96 46",
-  "M 3 72 C 21 66, 28 35, 43 52 S 66 82, 96 28",
-  "M 4 44 C 18 54, 24 22, 42 31 S 72 58, 96 34"
-];
 
 export function DashboardPage() {
   const dashboardQuery = useDashboardData();
@@ -274,22 +269,25 @@ export function DashboardPage() {
               </p>
               <p className="dashboard-metric-feature__unit">ms p95</p>
             </div>
-            <svg
-              aria-label="Animated API latency signal"
-              className="dashboard-metric-feature__wave"
-              preserveAspectRatio="none"
-              role="img"
-              viewBox="0 0 100 100"
-            >
-              {metricWave.map((path, index) => (
-                <path
-                  className="spatial-wave"
-                  d={path}
-                  key={path}
-                  style={{ animationDelay: `${index * -1.7}s` }}
-                />
-              ))}
-            </svg>
+            <div className="dashboard-metric-feature__trend">
+              <div className="dashboard-metric-feature__legend" aria-hidden="true">
+                <span>Earlier</span>
+                <span>Latest</span>
+              </div>
+              <SignalRibbon
+                ariaLabel="Recent P95 API latency from earlier samples to the latest sample"
+                className="dashboard-metric-feature__wave"
+                height="13rem"
+                points={
+                  radar.metricPoints.length > 0
+                    ? radar.metricPoints
+                    : [{ label: "No samples", value: 0 }]
+                }
+              />
+              <p className="dashboard-metric-feature__caption">
+                Recent P95 latency trend. Higher points mean slower requests.
+              </p>
+            </div>
           </section>
         </MotionReveal>
       </section>
