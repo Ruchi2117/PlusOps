@@ -7,9 +7,9 @@ AI-powered internal developer platform and incident management system for engine
 
 PlusOps is a production-minded SaaS project built incrementally to demonstrate modern full-stack engineering practices. The long-term product vision is to help engineering teams manage incidents, understand service health, inspect APIs, collaborate during operational events, and use AI assistance to improve developer productivity.
 
-This repository is under active development. The current stable release is **v1.0.0-beta.1: AI Copilot Platform and Observability Query Engine**. PlusOps grows in small, reviewable milestones rather than presenting unfinished product workflows as complete features.
+This repository is under active development. The current stable release is **v1.2.0: PlusOps Operations Experience**. PlusOps grows in small, reviewable milestones and labels seeded, deferred, and production-integrated behavior explicitly.
 
-Current work is focused on **Milestone 6: Frontend Product Beta**, turning the backend platform into a polished internal engineering SaaS experience.
+Current work is focused on **Functional Platform Hardening**: real provider-backed AI, executable health probes, application telemetry, focused Redis-backed AI rate limiting, PostgreSQL integration tests, and browser-level verification.
 
 ## Project Status
 
@@ -24,10 +24,12 @@ Current work is focused on **Milestone 6: Frontend Product Beta**, turning the b
 - [x] `v0.7.0` - Service Health Checks
 - [x] `v0.8.0` - Metrics Foundation
 - [x] `v1.0.0-beta.1` - AI Copilot Platform and Observability Query Engine
+- [x] `v1.1.0` - Integrated Product Beta
+- [x] `v1.2.0` - PlusOps Operations Experience
 
 ### Current Focus
 
-- Milestone 6 - Frontend Product Beta
+- Functional Platform Hardening
 
 ### Milestone 3 Progress
 
@@ -48,9 +50,9 @@ Current work is focused on **Milestone 6: Frontend Product Beta**, turning the b
 
 ## Latest Release
 
-**Current Stable Release:** `v1.0.0-beta.1 - AI Copilot Platform and Observability Query Engine`
+**Current Stable Release:** `v1.2.0 - PlusOps Operations Experience`
 
-The current released backend includes production-oriented authentication, incident lifecycle operations, an explicit incident workflow engine, collaboration APIs, the Service Catalog foundation, service health checks, metrics, metric querying, alert rules, and a provider-agnostic AI Copilot Platform with simulated providers.
+The stable beta combines production-oriented authentication, incident response, the service catalog, observability workflows, and an interactive operations UI. The current unreleased hardening work replaces simulated AI and health execution with configurable runtime adapters and adds verifiable application telemetry.
 
 ## Releases
 
@@ -65,7 +67,9 @@ The current released backend includes production-oriented authentication, incide
 | `v0.7.0` | Released | Service health checks, health evaluation, health history, simulated check runs |
 | `v0.8.0` | Released | Metrics foundation, metric definitions, labels, series, samples, retention references |
 | `v1.0.0-beta.1` | Released | Metrics query engine, alert rules, AI provider abstraction, simulated AI copilots |
-| Unreleased | Implemented locally | Frontend product beta with dashboard, incidents, services, health, metrics, alerts, AI, profile, settings, and notifications UI |
+| `v1.1.0` | Released | Live full-stack product beta, deterministic interconnected seed, authenticated frontend |
+| `v1.2.0` | Released | Interactive operations radar, dependency universe, incident response, metrics, alerts, AI, accessibility |
+| Unreleased | In validation | Real configured AI adapter, grounded PostgreSQL context, executable health probes, Redis-backed AI rate limiting, Prometheus/Grafana telemetry, integration and browser tests |
 
 ## Why PlusOps Exists
 
@@ -102,41 +106,42 @@ Suggested screenshots:
 - Service catalog REST API with RBAC, soft archive, pagination, filtering, sorting, and Swagger metadata
 - Service health checks backend: HTTP, TCP, synthetic, dependency, database, and cache check definitions
 - Service health evaluation with healthy, degraded, unhealthy, and unknown states
-- Simulated health check runs, health history, RBAC, audit logging, and timeline events
+- Executable HTTP, TCP, dependency, and PostgreSQL health probes with an outbound-host allowlist; unsupported cache probes report `unknown`
 - Metrics Foundation backend: metric definitions, retention policy references, labels, series, samples, and provider-neutral query boundaries
 - Metric types: counter, gauge, histogram, summary, and state
 - Cardinality-aware label validation and metric RBAC for view, submit, and manage actions
 - Metrics Query Engine backend: time range filters, label filters, aggregation, group-by, sorting, pagination, rate, percentile, and moving average support
-- Alert Rules backend: threshold conditions, alert severity and state model, simulated metric-backed evaluation, timeline events, RBAC, audit logging, and soft archive
-- AI Copilot Platform backend: provider abstraction, simulated OpenAI/Claude/Gemini/Groq adapters, prompt templates, conversations, usage tracking, and AI audit events
+- Alert Rules backend: threshold conditions, alert severity and state model, persisted metric-backed evaluation, timeline events, RBAC, audit logging, and soft archive
+- AI Copilot backend: OpenAI-compatible provider abstraction, configured real provider calls, PostgreSQL-grounded context, prompt templates, conversations, usage tracking, and AI audit events
+- Optional Redis-backed distributed rate limiting for authenticated AI endpoints, with fail-open behavior and degraded readiness
 - AI copilots for chat, log analysis, stack trace explanation, incident summarization, SQL generation, API documentation, release notes, and playground experimentation
 - Frontend product shell with responsive navigation, command palette, notification drawer, dark mode, error boundaries, loading skeletons, toast notifications, and typed API integration
 - Dashboard UI backed by platform APIs with active incidents, critical alerts, service posture, metric trend cards, recent activity, AI suggestions, and recent deployments
 - Incident Management UI with creation, list filters, pagination, detail view, timeline, comments, file upload/download, and workflow controls
 - Service Catalog UI with service list, service detail, dependencies, health summary, metrics summary, and deployment context
-- Observability UI for health checks, health history, metric querying with Recharts, alert rules, and simulated alert evaluation
+- Observability UI for executable health checks, health history, persisted metric querying with Recharts, and alert evaluation
 - AI Copilot UI with chat, conversation history, provider selector, usage statistics, playground, and engineering copilots
 - Profile, settings, and notification center surfaces
 - Incident DTO validation, pagination, filtering, sorting, and Swagger metadata
 - Clean Architecture module boundaries
 - Shared TypeScript/Zod contracts
 - Docker development environment
+- Prometheus metrics for API request rate, errors, latency, Node.js process health, AI limiter decisions, and Redis availability
+- Provisioned Grafana data source and PlusOps API dashboard
 - GitHub Actions CI
 
 ### In Progress
 
-- Milestone 6 frontend release validation and documentation polish
+- Full hardening validation and review
 
 ### Planned
 
-- Full frontend authentication screens
 - Email verification and password reset flows
 - OAuth and MFA
 - Realtime notification delivery
 - API operations workflows
-- Prometheus and OpenTelemetry ingestion
+- External telemetry ingestion and OpenTelemetry tracing
 - Alerting and notification delivery
-- Real LLM provider integrations
 - Production deployment hardening
 
 ## Authentication Highlights
@@ -172,18 +177,16 @@ Suggested screenshots:
 - TypeScript
 - Prisma
 - PostgreSQL
-- Redis
 - Swagger/OpenAPI
 - Zod
 - Helmet
+- prom-client
 
 ### Infrastructure
 
 - pnpm workspaces
 - Docker Compose
 - PostgreSQL
-- Redis
-- Mailpit
 - Prometheus
 - Grafana
 - GitHub Actions
@@ -288,11 +291,13 @@ AI Use Cases
    v
 AI Request Pipeline
    |
-   v
-Provider Interface
+   +--> PostgreSQL Operational Context
    |
    v
-Simulated OpenAI / Claude / Gemini / Groq Adapters
+OpenAI-Compatible Provider Interface
+   |
+   v
+Configured OpenAI or Groq endpoint
 ```
 
 The API follows Clean Architecture boundaries inside feature modules:
@@ -447,8 +452,9 @@ Demo mode is explicit and local-development only. It should not be used to hide 
 
 - Web app: http://localhost:5173
 - API health: http://localhost:4000/api/v1/health
+- API readiness: http://localhost:4000/api/v1/health/ready
 - API docs: http://localhost:4000/api/docs
-- Mailpit: http://localhost:8025
+- API Prometheus metrics: http://localhost:4000/api/internal/metrics
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001
 
@@ -460,7 +466,11 @@ Run the full local validation suite:
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:integration
+pnpm test:e2e
 pnpm build
+pnpm db:validate
+git diff --check
 ```
 
 Milestone 2 includes focused API unit tests for signup, login, refresh token rotation, logout, token security, DTO validation, and Prisma auth mappers. Milestone 3 adds incident domain, permission, use-case, controller, workflow, collaboration, DTO validation, pagination, and Prisma repository tests. Milestone 4 adds service catalog, service health, metrics foundation, metric query engine, and alert rule tests for domain rules, permissions, use cases, controllers, DTO validation, repositories, soft delete, dependency graph, health evaluation, timeline generation, cardinality validation, aggregation, alert threshold logic, alert state transitions, and RBAC. Milestone 5 adds AI platform tests for provider abstraction, prompt rendering, conversation persistence, usage tracking, AI audit logging, RBAC, DTO validation, controllers, and repositories. Milestone 6 adds frontend tests for UI components, query-key boundaries, Zustand UI state, and typed beta demo data.
@@ -473,6 +483,7 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 - [Milestone 4: Observability and Monitoring](./docs/milestones/04-observability-monitoring.md)
 - [Milestone 5: AI Copilot Platform](./docs/milestones/05-ai-copilot-platform.md)
 - [Milestone 6: Frontend Product Beta](./docs/milestones/06-frontend-product-beta.md)
+- [Functional Platform Hardening](./docs/milestones/07-functional-platform-hardening.md)
 - [Architecture Overview](./docs/architecture/overview.md)
 - [ER Diagram](./docs/architecture/er-diagram.md)
 - [Developer Guide](./docs/developer-guide.md)
@@ -485,6 +496,8 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 - [ADR 0006: Data-Backed RBAC](./docs/architecture/adr/0006-use-data-backed-rbac.md)
 - [ADR 0007: Incident Aggregate and State Machine](./docs/architecture/adr/0007-use-incident-aggregate-state-machine.md)
 - [ADR 0008: Service-Centric Observability](./docs/architecture/adr/0008-use-service-centric-observability.md)
+- [ADR 0009: Simplify the Runtime](./docs/architecture/adr/0009-simplify-runtime-and-observability.md)
+- [ADR 0010: Ground AI in PlusOps Data](./docs/architecture/adr/0010-use-grounded-configured-ai.md)
 
 ## Roadmap
 
@@ -504,16 +517,16 @@ Milestone 2 includes focused API unit tests for signup, login, refresh token rot
 [done] AI Copilot Platform
    |
    v
-[current] Frontend Product Beta
+[done] Frontend Product Beta
    |
    v
-API Operations
+[done] Interactive Operations Experience
    |
    v
-Realtime Notifications
+[current] Functional Platform Hardening
    |
    v
-Deployment Hardening
+Deployment and External Telemetry
 ```
 
 1. Milestone 1: Architecture Foundation - released
@@ -521,11 +534,10 @@ Deployment Hardening
 3. Milestone 3: Incident Management Core - released through `v0.5.0`
 4. Milestone 4: Observability and Monitoring - released through `v1.0.0-beta.1`
 5. Milestone 5: AI Copilot Platform - released in `v1.0.0-beta.1`
-6. Milestone 6: Frontend Product Beta - implemented locally
-7. Milestone 7: API Operations
-8. Milestone 8: Realtime Notifications
-9. Milestone 9: Deployment Hardening
-10. Milestone 10: Production Release Readiness
+6. Milestone 6: Frontend Product Beta - released in `v1.1.0`
+7. Milestone 7: Interactive Operations Experience - released in `v1.2.0`
+8. Functional Platform Hardening - in validation
+9. Deployment and external telemetry - future
 
 ## Contributing
 

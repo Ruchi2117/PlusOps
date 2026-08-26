@@ -61,6 +61,28 @@ Run the web app:
 pnpm dev:web
 ```
 
+Optional real AI configuration:
+
+```bash
+AI_PROVIDER=openai
+AI_API_KEY=replace-with-provider-key
+AI_MODEL=gpt-4.1-mini
+AI_BASE_URL=https://api.openai.com/v1
+```
+
+Without a configured key and model, AI endpoints return `503 Service Unavailable`; they do not produce demo responses. Add any HTTP, TCP, or dependency health-probe hosts to `HEALTH_CHECK_ALLOWED_HOSTS` before running them.
+
+Redis is optional and has one application responsibility: shared rate limiting for authenticated AI requests. Docker Compose provides it locally. Configure a remote instance with:
+
+```bash
+REDIS_URL=redis://localhost:6379
+REDIS_CONNECT_TIMEOUT_MS=1000
+AI_RATE_LIMIT_MAX_REQUESTS=20
+AI_RATE_LIMIT_WINDOW_SECONDS=60
+```
+
+When Redis is unavailable, PostgreSQL-backed workflows remain operational and AI requests fail open rather than failing the product request. `/api/v1/health/ready` reports Redis as a degraded optional dependency, and `/api/internal/metrics` exposes limiter decisions and Redis availability. Redis does not store authentication sessions or product records.
+
 ## Frontend Architecture
 
 The web app lives in `apps/web`.
@@ -129,7 +151,20 @@ Run full repository validation:
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:integration
+pnpm test:e2e
 pnpm build
+pnpm db:validate
+git diff --check
+```
+
+Integration and browser tests require an isolated PostgreSQL database:
+
+```bash
+docker compose -f infra/docker/docker-compose.yml --profile test up -d postgres-test
+$env:TEST_DATABASE_URL="postgresql://plusops:plusops@localhost:5433/plusops_test?schema=public"
+pnpm test:integration
+pnpm test:e2e
 ```
 
 ## Current Frontend Surfaces
@@ -149,8 +184,7 @@ pnpm build
 
 ## Deferred Frontend Work
 
-- Full auth screens
 - Profile update API integration
 - Realtime notifications
-- End-to-end browser tests
 - Production deployment polish
+- External telemetry ingestion

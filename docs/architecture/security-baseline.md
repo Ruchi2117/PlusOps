@@ -25,5 +25,7 @@ Roles should be treated as permission bundles. Protected endpoints should check 
 - Helmet on the API.
 - Request validation for every write endpoint.
 - Output escaping handled by React.
-- Rate limiting for auth and AI endpoints.
+- Rate limiting for auth and AI endpoints is required before an internet-facing deployment; it is not yet implemented.
 - Audit log for privileged actions.
+- Outbound health probes are restricted by `HEALTH_CHECK_ALLOWED_HOSTS` to reduce SSRF risk.
+- The Prometheus endpoint must remain on a private network or be protected by an ingress policy in production.

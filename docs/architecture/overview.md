@@ -11,12 +11,10 @@ flowchart LR
   Engineer["Engineer / Manager / QA"] --> Web["PlusOps Web App"]
   Web --> API["PlusOps API"]
   API --> Postgres["PostgreSQL"]
-  API --> Redis["Redis"]
-  API --> AI["AI Providers"]
-  API --> GitHub["GitHub"]
-  API --> Slack["Slack"]
-  API --> Observability["Prometheus / Grafana / OpenTelemetry"]
-  API --> Email["Email Provider"]
+  API -. "optional AI rate limits" .-> Redis["Redis"]
+  API --> AI["Configured OpenAI-compatible Provider"]
+  Prometheus["Prometheus"] --> API
+  Grafana["Grafana"] --> Prometheus
 ```
 
 ## Backend Module Map
@@ -69,7 +67,7 @@ flowchart TD
   AIUI --> Query
   Query --> APIClient["Token-aware API Client"]
   APIClient --> API["NestJS API"]
-  Query --> DemoData["Typed Beta Demo Fallback"]
+  Query --> DemoData["Explicit local demo mode"]
 
   Shell --> UIState["Zustand UI State"]
   UIState --> CommandPalette["Command Palette"]
@@ -79,7 +77,7 @@ flowchart TD
 
 The frontend keeps server state in TanStack Query and local interaction state in Zustand. This avoids copying API responses into a global client store while still allowing UI concerns such as the command palette, notification drawer, selected records, and theme to remain fast and local.
 
-The API client attaches the current JWT access token when available and attempts a refresh once on unauthorized responses. Read workflows use typed beta demo fallbacks when a local backend is unavailable or unseeded, which keeps the product inspectable without weakening the real backend integration path.
+The API client attaches the current JWT access token when available and attempts a refresh once on unauthorized responses. Live mode surfaces backend errors and never silently replaces them with demo data. Typed demo data is available only when `VITE_PLUSOPS_DATA_MODE=demo` is deliberately enabled for local UI inspection.
 
 The React app is route-split by product area:
 
@@ -110,7 +108,7 @@ flowchart TD
   UseCases --> Audit["Audit Log"]
 ```
 
-Services are stable ownership boundaries. Incidents, deployments, metrics, health checks, alerts, and runbooks can all attach to a service without coupling PlusOps to transient pods, containers, or hosts. Phase 1 includes service metadata, team ownership, environments, dependencies, deployment records, RBAC, soft archive, pagination, filtering, sorting, Swagger metadata, and graph cycle prevention. Phase 2 adds backend health check configuration, simulated check runs, service health evaluation, history, audit logging, and service health timeline events. Phase 3 adds metric definitions, labels, series, samples, retention references, metric RBAC, audit logging, and metric timeline events. Phase 4 adds Prisma-backed query execution, alert rules, alert evaluation, alert timeline events, and alert RBAC. It intentionally does not scrape Prometheus, ingest OpenTelemetry, send notifications, create incidents automatically, render dashboards, or expose frontend workflows yet.
+Services are stable ownership boundaries. Incidents, deployments, metrics, health checks, alerts, and runbooks attach to a service without coupling PlusOps to transient pods, containers, or hosts. Health runs execute configured HTTP, TCP, dependency, or PostgreSQL probes; outbound network targets must match `HEALTH_CHECK_ALLOWED_HOSTS`. Product cache probes remain explicitly unsupported because the application Redis instance is scoped to AI rate limiting, not service dependency monitoring. Metrics and alert evaluation operate on persisted PlusOps samples. External Prometheus/OpenTelemetry ingestion, notifications, and automatic incident creation remain deferred.
 
 ## Service Health Architecture
 
@@ -119,6 +117,7 @@ flowchart TD
   ServiceHealthController["Service Health Controller"] --> Guards["Access Token and Health Permission Guards"]
   HealthChecksController["Health Checks Controller"] --> Guards
   Guards --> HealthUseCases["Health Use Cases"]
+  HealthUseCases --> Executor["HTTP / TCP / Dependency / PostgreSQL Executor"]
   HealthUseCases --> HealthDomain["Health Domain Evaluation"]
   HealthUseCases --> HealthPorts["Health Repository Ports"]
   HealthPorts --> HealthPrisma["Prisma Health Repositories"]
@@ -131,6 +130,8 @@ flowchart TD
 ```
 
 Health checks are modeled before metrics because they are operational decision signals. A liveness or readiness check tells Kubernetes and load balancers whether a process should stay alive or receive traffic. Metrics explain trends and causes later; health checks establish whether the service can currently perform its expected work.
+
+The executor records measured latency and the observed outcome. It does not accept a caller-supplied result. A missing target, disallowed host, disabled check, unsupported cache probe, or stale observation becomes `unknown` instead of fabricated success.
 
 ## Metrics Foundation Architecture
 
@@ -188,17 +189,21 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-  AIController["AI Controller"] --> Guards["Access Token and AI Permission Guards"]
+  AIController["AI Controller"] --> Guards["Access Token, Permission, and Rate Limit Guards"]
+  Guards --> RateLimitPort["Rate Limit Store Port"]
+  RateLimitPort -. "optional" .-> Redis["Redis"]
   Guards --> AIUseCases["AI Use Cases"]
   AIUseCases --> Pipeline["AI Request Pipeline"]
   Pipeline --> PromptTemplates["Versioned Prompt Templates"]
   Pipeline --> Conversations["Conversation and Message Context"]
-  Pipeline --> ProviderConfig["Provider Configuration"]
+  Pipeline --> ContextPort["Operational Context Port"]
+  ContextPort --> PrismaContext["Prisma Context Adapter"]
+  PrismaContext --> Postgres["PostgreSQL"]
+  Pipeline --> ProviderConfig["Environment-backed Provider Configuration"]
   Pipeline --> ProviderPort["AI Provider Interface"]
-  ProviderPort --> OpenAI["Simulated OpenAI Adapter"]
-  ProviderPort --> Claude["Simulated Claude Adapter"]
-  ProviderPort --> Gemini["Simulated Gemini Adapter"]
-  ProviderPort --> Groq["Simulated Groq Adapter"]
+  ProviderPort --> Compatible["OpenAI-compatible HTTP Adapter"]
+  Compatible --> OpenAI["OpenAI"]
+  Compatible --> Groq["Groq-compatible endpoint"]
   Pipeline --> Usage["Usage Records"]
   Pipeline --> AIAudit["AI Audit Events"]
   Pipeline --> AuthAudit["Platform Audit Log"]
@@ -210,7 +215,7 @@ flowchart TD
   PrismaAI --> Postgres["PostgreSQL"]
 ```
 
-The AI platform is deliberately provider-agnostic. Product use cases call the AI request pipeline and provider interface, not a vendor SDK. Today every provider adapter returns simulated responses so the architecture, RBAC, prompt rendering, conversation persistence, usage tracking, and audit logging can mature before real API keys exist. Later OpenAI, Claude, Gemini, or Groq adapters can make real calls behind the same interface without changing incident, observability, SQL, documentation, or release-note workflows.
+The AI platform is provider-agnostic at the application boundary. Authenticated AI requests pass through a Redis-backed distributed rate-limit guard before reaching use cases. The pipeline loads authoritative incident, service, health, metric, alert, dependency, ownership, and timeline context from PostgreSQL before calling the configured OpenAI-compatible endpoint. The system prompt requires separate facts, interpretation, recommended actions, and uncertainty. Caller-supplied context is treated as a hint, not as an authoritative fact source. Without `AI_API_KEY` and `AI_MODEL`, AI requests return a clear `503` configuration error; there is no fake runtime fallback. If optional Redis is unavailable, the rate limiter fails open and readiness reports degraded while PostgreSQL-backed workflows continue.
 
 ```mermaid
 sequenceDiagram
@@ -226,12 +231,19 @@ sequenceDiagram
   Controller->>UseCase: Validated DTO plus actor
   UseCase->>Pipeline: Feature, context, variables
   Pipeline->>Prompt: Render versioned prompt
-  Pipeline->>Provider: Generate simulated response
+  Pipeline->>Store: Load authoritative operational context
+  Pipeline->>Provider: Generate grounded response
   Pipeline->>Store: Conversation, usage, audit
   Pipeline-->>Controller: Shared AI response contract
 ```
 
-Current AI capabilities are chat, playground, log analysis, stack trace explanation, incident summarization, SQL generation, API documentation generation, and release note generation. Real provider API calls, streaming, RAG, embeddings, vector databases, agents, function calling, MCP, browser automation, voice, and vision are intentionally deferred.
+Current AI capabilities are chat, playground, log analysis, stack trace explanation, incident summarization, SQL generation, API documentation generation, and release note generation. Provider calls are real when configured. Streaming, RAG, embeddings, vector databases, agents, function calling, MCP, browser automation, voice, and vision are intentionally deferred.
+
+## Application Observability
+
+The NestJS API emits structured JSON request-completion logs with request IDs, normalized routes, status codes, and latency. A version-neutral `/api/internal/metrics` endpoint exports `prom-client` request, error, duration, Node.js process, AI rate-limit decision, and Redis availability metrics. Prometheus scrapes that endpoint and Grafana is provisioned with a real API dashboard. The readiness endpoint queries required PostgreSQL and reports optional Redis as healthy, degraded, or disabled.
+
+These are telemetry about PlusOps itself. The service metrics shown inside the product are still persisted samples supplied by the deterministic seed or metric submission API; PlusOps does not yet ingest external production telemetry.
 
 ## Incident Domain Architecture
 
@@ -339,11 +351,12 @@ Each domain module owns its persistence model and exposes behavior through appli
 
 ## Deployment Shape
 
-Initial deployment can run as:
+The credible current deployment boundary is intentionally small:
 
-- Static web app on S3 plus CloudFront.
-- API service on ECS, EC2, or container platform.
-- PostgreSQL on RDS.
-- Redis on ElastiCache.
-- Object storage on S3 for incident attachments.
-- GitHub Actions for CI/CD.
+- React static assets served by the web container or a static host.
+- One stateless NestJS API container.
+- PostgreSQL for application state, sessions, audit records, and operational domain data.
+- Prometheus and Grafana for self-observability where the environment can keep the metrics endpoint private.
+- Durable object storage is required before local attachment bytes are considered production-ready.
+
+Redis is an optional runtime dependency used only for distributed AI rate limiting. Kafka, Kubernetes, and AWS-specific services are not runtime requirements and should be introduced only when a measured scaling or delivery need justifies them.

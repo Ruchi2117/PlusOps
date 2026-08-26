@@ -56,7 +56,7 @@ Useful accounts:
 | `qa@plusops.local` | QA Engineer |
 | `viewer@plusops.local` | Viewer |
 
-The seed intentionally models one connected operational story: Payments API latency rises, Checkout health degrades, alerts fire, an incident is opened, responders collaborate, metrics explain the spike, and AI configuration is available for simulated Copilot flows.
+The seed intentionally models one connected operational story: Payments API latency rises, Checkout health degrades, alerts fire, an incident is opened, responders collaborate, and metrics explain the spike. Seeded AI provider records are catalog metadata only; runtime Copilot requests still require an explicitly configured external provider.
 
 ## Baselining An Existing Local Database
 
