@@ -92,7 +92,7 @@ export function AppShell() {
 
       <div className="lg:pl-24">
         <header className="sticky top-0 z-20 px-4 pt-4 md:px-8 lg:px-10">
-          <div className="mx-auto flex h-14 w-full max-w-[1500px] items-center justify-between border-b border-white/[0.06] bg-background/40 backdrop-blur-xl">
+          <div className="mx-auto flex h-14 w-full max-w-[1500px] items-center justify-between rounded-lg border border-white/[0.07] bg-background/55 px-3 shadow-[0_14px_45px_rgb(0_0_0_/_0.2)] backdrop-blur-xl sm:px-4">
             <div className="flex min-w-0 items-center gap-4">
               <Button
                 variant="ghost"
