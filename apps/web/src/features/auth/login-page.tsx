@@ -18,12 +18,16 @@ type LoginLocationState = {
 };
 
 export function LoginPage() {
+  const isProduction = import.meta.env.PROD;
+  const recruiterDemoEmail = import.meta.env.VITE_PLUSOPS_RECRUITER_DEMO_EMAIL?.trim() ?? "";
+  const recruiterDemoPassword = import.meta.env.VITE_PLUSOPS_RECRUITER_DEMO_PASSWORD?.trim() ?? "";
+  const hasRecruiterDemo = Boolean(isProduction && recruiterDemoEmail && recruiterDemoPassword);
   const navigate = useNavigate();
   const location = useLocation();
   const accessToken = useSessionStore((state) => state.accessToken);
   const loginMutation = useLoginMutation();
-  const [email, setEmail] = useState("manager@plusops.local");
-  const [password, setPassword] = useState("PlusOpsDev123!");
+  const [email, setEmail] = useState(isProduction ? "" : "manager@plusops.local");
+  const [password, setPassword] = useState(isProduction ? "" : "PlusOpsDev123!");
   const redirectTo = (location.state as LoginLocationState | null)?.from?.pathname ?? "/dashboard";
 
   if (accessToken) {
@@ -63,10 +67,14 @@ export function LoginPage() {
         </div>
 
         <div className="mt-8">
-          <p className="art-eyebrow">Development session</p>
-          <h1 className="mt-3 text-4xl font-black leading-none text-white">Sign in to the seeded platform.</h1>
+          <p className="art-eyebrow">{isProduction ? "Portfolio deployment" : "Development session"}</p>
+          <h1 className="mt-3 text-4xl font-black leading-none text-white">
+            {isProduction ? "Sign in to PlusOps." : "Sign in to the seeded platform."}
+          </h1>
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            Uses the real NestJS auth flow with an access token and HttpOnly refresh cookie.
+            {isProduction
+              ? "Uses the live NestJS API, PostgreSQL persistence, and a secure HttpOnly refresh cookie."
+              : "Uses the real NestJS auth flow with an access token and HttpOnly refresh cookie."}
           </p>
         </div>
 
@@ -109,10 +117,45 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-5 rounded-lg border border-white/[0.08] bg-white/[0.035] p-3 text-xs leading-5 text-muted-foreground">
-          Seeded account: <span className="font-semibold text-white">manager@plusops.local</span> /{" "}
-          <span className="font-semibold text-white">PlusOpsDev123!</span>
-        </div>
+        {hasRecruiterDemo ? (
+          <div className="mt-6 border-t border-white/[0.08] pt-5 text-xs leading-5 text-muted-foreground">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-white">Recruiter demo</p>
+                <p>Public read-only access. Changes are blocked by Viewer RBAC.</p>
+              </div>
+              <span className="rounded-md border border-emerald-400/25 bg-emerald-400/10 px-2 py-1 font-semibold text-emerald-300">
+                Viewer
+              </span>
+            </div>
+            <dl className="mt-4 grid gap-2">
+              <div className="flex items-start justify-between gap-4">
+                <dt>Email</dt>
+                <dd className="break-all text-right font-semibold text-white">{recruiterDemoEmail}</dd>
+              </div>
+              <div className="flex items-start justify-between gap-4">
+                <dt>Password</dt>
+                <dd className="break-all text-right font-semibold text-white">{recruiterDemoPassword}</dd>
+              </div>
+            </dl>
+            <Button
+              className="mt-4 w-full"
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setEmail(recruiterDemoEmail);
+                setPassword(recruiterDemoPassword);
+              }}
+            >
+              Use recruiter demo account
+            </Button>
+          </div>
+        ) : !isProduction ? (
+          <div className="mt-5 rounded-lg border border-white/[0.08] bg-white/[0.035] p-3 text-xs leading-5 text-muted-foreground">
+            Seeded account: <span className="font-semibold text-white">manager@plusops.local</span> /{" "}
+            <span className="font-semibold text-white">PlusOpsDev123!</span>
+          </div>
+        ) : null}
       </section>
     </main>
   );
