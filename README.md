@@ -77,14 +77,29 @@ Engineering teams often switch between incident tools, dashboards, API documenta
 
 ## Screenshots
 
-Screenshots will be added as the UI stabilizes.
+### Operational Radar
 
-Suggested screenshots:
+The live operations scene connects service health, incidents, latency signals, alerts, and AI context around the selected service.
 
-- Operations dashboard with service health, alerts, activity, and AI suggestions
-- Incident detail with timeline, comments, attachments, and workflow actions
-- Service detail with dependencies, health checks, metrics, and deployments
-- AI Copilot workspace with chat, provider selection, copilots, and playground
+![PlusOps operational radar](./docs/assets/screenshots/operations-radar.png)
+
+### Incident And Observability Overview
+
+The dashboard combines the active incident field with current service health and the recent P95 latency trend.
+
+![PlusOps incident and observability dashboard](./docs/assets/screenshots/dashboard-overview.png)
+
+### Service Health
+
+The health workspace summarizes the selected service state, latest evaluation, critical failures, and recent health history.
+
+![PlusOps service health workspace](./docs/assets/screenshots/service-health.png)
+
+### AI Copilot
+
+The Copilot workspace keeps operational context visible while making provider availability explicit instead of silently falling back to simulated AI.
+
+![PlusOps AI Copilot workspace](./docs/assets/screenshots/ai-copilot.png)
 
 ## Current Features
 
