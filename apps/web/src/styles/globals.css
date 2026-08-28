@@ -3418,7 +3418,88 @@ select option {
 }
 
 .alert-threshold-field__signal {
-  margin-top: auto;
+  margin-top: 0;
+}
+
+.alert-threshold-field,
+.alert-threshold-field[data-height="full"] {
+  display: flex;
+  min-height: auto;
+  flex-direction: column;
+}
+
+.alert-threshold-field[data-has-inspector="true"] .operational-scene__content {
+  order: 1;
+  display: grid;
+  min-height: auto;
+  grid-template-columns: minmax(16rem, 0.72fr) minmax(0, 1.28fr);
+  column-gap: clamp(2rem, 5vw, 5rem);
+  row-gap: 1.5rem;
+  padding-right: var(--ops-space-scene);
+}
+
+.alert-threshold-field__copy {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 100%;
+}
+
+.alert-threshold-field__signal {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+}
+
+.alert-threshold-field__threshold,
+.alert-threshold-field__empty-signal {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+}
+
+.alert-threshold-field .operational-scene__spatial {
+  position: relative;
+  inset: auto;
+  order: 2;
+  display: grid;
+  min-height: auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: center;
+  justify-items: center;
+  margin: 0 var(--ops-space-scene);
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  padding: 1.5rem 0;
+}
+
+.alert-threshold-field .signal-node[data-floating="true"] {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: min(100%, 11.5rem);
+  transform: none;
+}
+
+.alert-threshold-field__inspector {
+  position: relative;
+  inset: auto;
+  order: 3;
+  width: auto;
+  max-height: none;
+  margin: 0 var(--ops-space-scene) var(--ops-space-scene);
+}
+
+.alert-threshold-field__inspector .scene-inspector__items {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(1.5rem, 4vw, 4rem);
+}
+
+.alert-threshold-field__inspector .scene-inspector__item {
+  min-width: 0;
+}
+
+.alert-threshold-field__inspector .scene-inspector__item-value {
+  overflow-wrap: anywhere;
 }
 
 .alert-rule-index {
@@ -3572,10 +3653,9 @@ select option {
     position: relative;
     inset: auto;
     order: 3;
-    width: 100%;
+    width: auto;
     max-height: none;
-    margin-top: 1rem;
-    padding: 1rem;
+    margin: 0 var(--ops-space-scene) var(--ops-space-scene);
   }
 }
 
@@ -3856,6 +3936,11 @@ select option {
     flex-direction: column;
   }
 
+  .alert-threshold-field .operational-scene__content {
+    display: flex;
+    flex-direction: column;
+  }
+
   .metrics-signal-field__copy,
   .alert-threshold-field__copy,
   .metrics-signal-field__stream,
@@ -3880,7 +3965,7 @@ select option {
 
   .metrics-signal-field__inspector,
   .alert-threshold-field__inspector {
-    width: 100%;
+    width: auto;
     max-height: none;
   }
 
@@ -3927,6 +4012,10 @@ select option {
 
   .metrics-signal-field .operational-scene__spatial,
   .alert-threshold-field .operational-scene__spatial {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-threshold-field__inspector .scene-inspector__items {
     grid-template-columns: 1fr;
   }
 
