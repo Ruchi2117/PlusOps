@@ -38,6 +38,8 @@ const environmentSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(24).optional(),
   JWT_REFRESH_TTL: z.string().default("7d"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  PLUSOPS_RECRUITER_DEMO_EMAIL: z.string().min(3).optional(),
+  PLUSOPS_RECRUITER_DEMO_PASSWORD: z.string().min(12).optional(),
   REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().max(30_000).default(1_000),
   REDIS_URL: z.string().url().optional()
 }).superRefine((environment, context) => {
@@ -46,6 +48,14 @@ const environmentSchema = z.object({
       code: "custom",
       path: ["AI_MODEL"],
       message: "AI_MODEL is required when AI_API_KEY is configured."
+    });
+  }
+
+  if (Boolean(environment.PLUSOPS_RECRUITER_DEMO_EMAIL) !== Boolean(environment.PLUSOPS_RECRUITER_DEMO_PASSWORD)) {
+    context.addIssue({
+      code: "custom",
+      path: ["PLUSOPS_RECRUITER_DEMO_EMAIL"],
+      message: "Recruiter demo email and password must be configured together."
     });
   }
 });

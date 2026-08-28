@@ -20,6 +20,7 @@ import { PrismaAuthOneTimeTokenRepository } from "./infrastructure/persistence/p
 import { PrismaAuthRoleCatalogSeeder } from "./infrastructure/persistence/prisma-auth-role-catalog.seeder";
 import { PrismaAuthSessionRepository } from "./infrastructure/persistence/prisma-auth-session.repository";
 import { PrismaAuthUserRepository } from "./infrastructure/persistence/prisma-auth-user.repository";
+import { RecruiterDemoAccountBootstrap } from "./infrastructure/bootstrap/recruiter-demo-account.bootstrap";
 import { Argon2PasswordHasher } from "./infrastructure/security/argon2-password-hasher";
 import { JwtTokenService } from "./infrastructure/security/jwt-token.service";
 import { SystemClock } from "./infrastructure/time/system-clock";
@@ -75,6 +76,7 @@ const authProviderTokens = [
   providers: [
     ...authProviders,
     PrismaAuthRoleCatalogSeeder,
+    RecruiterDemoAccountBootstrap,
     RefreshTokenCookieService,
     AccessTokenGuard,
     PermissionsGuard,

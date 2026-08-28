@@ -1,4 +1,5 @@
 import { Prisma, PrismaClient } from "@prisma/client";
+import * as argon2 from "argon2";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -14,8 +15,10 @@ const prisma = new PrismaClient();
 
 const seedSource = "plusops-seed";
 const localPassword = "PlusOpsDev123!";
-const passwordHash =
-  "$argon2id$v=19$m=19456,p=1,t=2$cGx1c29wcy1kZW1vLXNlZWQ$ypD9FkfWrlFntL8xjA22KjgaMcN0WAJSXRsgU1S8U1o";
+const managerEmail =
+  process.env.PLUSOPS_DEMO_EMAIL?.trim().toLowerCase() || "manager@plusops.local";
+const recruiterDemoEmail =
+  process.env.PLUSOPS_RECRUITER_DEMO_EMAIL?.trim().toLowerCase() || "viewer@plusops.local";
 
 const now = new Date();
 
@@ -44,10 +47,10 @@ const roleMetadata = {
 
 const users = [
   user("admin", "admin@plusops.local", "Ruchi Shaktawat", "admin"),
-  user("manager", "manager@plusops.local", "Maya Rao", "engineering_manager"),
+  user("manager", managerEmail, "Maya Rao", "engineering_manager"),
   user("developer", "developer@plusops.local", "Arjun Mehta", "developer"),
   user("qa", "qa@plusops.local", "Neha Kapoor", "qa_engineer"),
-  user("viewer", "viewer@plusops.local", "Liam Chen", "viewer")
+  user("viewer", recruiterDemoEmail, "Portfolio Viewer", "viewer")
 ] as const;
 
 const teams = [
@@ -402,11 +405,12 @@ const promptTemplates = [
 
 async function main(): Promise<void> {
   ensureDatabaseUrl();
+  const passwordHashes = await createSeedPasswordHashes();
 
   console.log("Seeding PlusOps deterministic demo data...");
 
   await seedRbacCatalog();
-  await seedUsersAndTeams();
+  await seedUsersAndTeams(passwordHashes);
   await seedServiceCatalog();
   await seedHealth();
   await seedMetrics();
@@ -418,7 +422,9 @@ async function main(): Promise<void> {
   const counts = await collectCounts();
 
   console.log("PlusOps seed complete.");
-  console.log(`Demo password: ${localPassword}`);
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`Demo password: ${localPassword}`);
+  }
   console.table(counts);
 }
 
@@ -475,9 +481,11 @@ async function seedRbacCatalog(): Promise<void> {
   });
 }
 
-async function seedUsersAndTeams(): Promise<void> {
+async function seedUsersAndTeams(passwordHashes: { default: string; viewer: string }): Promise<void> {
   await prisma.$transaction(async (transaction) => {
     for (const seedUser of users) {
+      const passwordHash = seedUser.key === "viewer" ? passwordHashes.viewer : passwordHashes.default;
+
       await transaction.user.upsert({
         where: { email: seedUser.email },
         update: {
@@ -1985,6 +1993,33 @@ function ensureDatabaseUrl(): void {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is required before running pnpm db:seed.");
   }
+}
+
+async function createSeedPasswordHashes(): Promise<{ default: string; viewer: string }> {
+  const configuredPassword = process.env.PLUSOPS_SEED_PASSWORD?.trim();
+  const recruiterDemoPassword = process.env.PLUSOPS_RECRUITER_DEMO_PASSWORD?.trim();
+
+  if (process.env.NODE_ENV === "production" && !configuredPassword) {
+    throw new Error("PLUSOPS_SEED_PASSWORD is required when seeding production data.");
+  }
+
+  const defaultPassword = configuredPassword || localPassword;
+  const hashOptions = {
+    type: argon2.argon2id,
+    memoryCost: 19_456,
+    timeCost: 2,
+    parallelism: 1
+  } as const;
+
+  const [defaultPasswordHash, viewerPasswordHash] = await Promise.all([
+    argon2.hash(defaultPassword, hashOptions),
+    argon2.hash(recruiterDemoPassword || defaultPassword, hashOptions)
+  ]);
+
+  return {
+    default: defaultPasswordHash,
+    viewer: viewerPasswordHash
+  };
 }
 
 function loadEnv(filePath: string): void {
