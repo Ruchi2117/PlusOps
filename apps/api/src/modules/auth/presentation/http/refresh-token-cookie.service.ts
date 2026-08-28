@@ -60,10 +60,11 @@ export class RefreshTokenCookieService {
   private buildCookieOptions(expiresAt: Date): CookieOptions {
     const maxAge = Math.max(0, expiresAt.getTime() - this.clock.now().getTime());
     const domain = this.configService.get<string>("AUTH_COOKIE_DOMAIN");
+    const isProduction = this.configService.get<string>("NODE_ENV") === "production";
     const options: CookieOptions = {
       httpOnly: true,
-      secure: this.configService.get<string>("NODE_ENV") === "production",
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       path: "/api/v1/auth",
       maxAge,
       expires: expiresAt
@@ -78,10 +79,11 @@ export class RefreshTokenCookieService {
 
   private buildClearCookieOptions(): CookieOptions {
     const domain = this.configService.get<string>("AUTH_COOKIE_DOMAIN");
+    const isProduction = this.configService.get<string>("NODE_ENV") === "production";
     const options: CookieOptions = {
       httpOnly: true,
-      secure: this.configService.get<string>("NODE_ENV") === "production",
-      sameSite: "lax",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       path: "/api/v1/auth"
     };
 

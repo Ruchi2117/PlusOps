@@ -19,7 +19,7 @@ describe("RefreshTokenCookieService", () => {
     expect(response.cookie).toHaveBeenCalledWith("plusops_refresh", "raw-refresh-token", {
       httpOnly: true,
       secure: true,
-      sameSite: "lax",
+      sameSite: "none",
       path: "/api/v1/auth",
       maxAge: 604_800_000,
       expires: expiresAt(),
@@ -76,7 +76,7 @@ describe("RefreshTokenCookieService", () => {
     expect(response.clearCookie).toHaveBeenCalledWith("plusops_refresh", {
       httpOnly: true,
       secure: true,
-      sameSite: "lax",
+      sameSite: "none",
       path: "/api/v1/auth",
       domain: ".plusops.dev"
     });
