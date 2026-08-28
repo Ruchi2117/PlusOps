@@ -5,6 +5,8 @@ build
 coverage
 .git
 .env
+.env.*
+!.env.example
 .turbo
 .plusops-dev
 *.log
